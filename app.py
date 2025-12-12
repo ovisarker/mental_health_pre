@@ -3,6 +3,11 @@ import pandas as pd
 import numpy as np
 import joblib
 import re
+import plotly.express as px
+import warnings
+
+# Suppress warnings for cleaner logs
+warnings.filterwarnings("ignore")
 
 # Page Config
 st.set_page_config(page_title="Student Mental Health AI", page_icon="🧠", layout="wide")
@@ -15,7 +20,7 @@ def reset_app():
     st.session_state.reset = True
     st.rerun()
 
-# 1. Load Resources
+# 1. Load Resources (Cached)
 @st.cache_resource
 def load_resources():
     try:
@@ -29,10 +34,10 @@ def load_resources():
 model, encoders, feature_columns = load_resources()
 
 if model is None:
-    st.error("🚨 Model files missing! Please ensure .pkl files are in GitHub.")
+    st.error("🚨 Model files missing! Please upload .pkl files to GitHub.")
     st.stop()
 
-# Helper: Extract numbers
+# Helper: Extract numbers safely from text (e.g., "18-22" -> 18.0)
 def extract_number(text):
     try:
         if pd.isna(text): return 0.0
@@ -44,7 +49,33 @@ def extract_number(text):
     except:
         return 0.0
 
-# --- HEADER ---
+# Helper: Wellness Tips
+def get_recommendations(condition):
+    tips = {
+        "Anxiety": [
+            "🌬️ **Deep Breathing:** Try the 4-7-8 breathing technique (Inhale 4s, Hold 7s, Exhale 8s).",
+            "🧘 **Grounding:** Name 5 things you see, 4 you feel, 3 you hear.",
+            "☕ **Limit Caffeine:** Reduce coffee/tea intake as it fuels anxiety."
+        ],
+        "Stress": [
+            "📝 **Prioritize:** Make a to-do list and break tasks into small steps.",
+            "🚶 **Move:** A 10-minute walk can lower cortisol levels.",
+            "💤 **Sleep:** Ensure you get 7-8 hours of quality sleep."
+        ],
+        "Depression": [
+            "🤝 **Connect:** Talk to a friend or family member today.",
+            "🌞 **Sunlight:** Spend 15 minutes outside in morning light.",
+            "📅 **Routine:** Stick to a small, manageable daily routine."
+        ],
+        "Healthy": [
+            "🎉 **Keep going!** Your mental resilience is strong.",
+            "💧 **Stay Hydrated:** Drink enough water.",
+            "📖 **Journal:** Write down 3 good things that happened today."
+        ]
+    }
+    return tips.get(condition, [])
+
+# --- HEADER & RESET BUTTON ---
 col1, col2 = st.columns([8, 2])
 with col1:
     st.title("🧠 AI-Powered Student Mental Health Assessment")
@@ -52,24 +83,41 @@ with col2:
     if st.button("🔄 Reset All", type="primary"):
         reset_app()
 
-st.markdown("This system uses a **Hybrid ML Model** to analyze behavioral patterns. No manual scoring is used.")
+st.markdown("""
+This system uses a **Hybrid Machine Learning Model** (Random Forest + Gradient Boosting) trained on raw student data. 
+It analyzes behavioral patterns to predict mental health conditions. **No manual scoring or rule-based calculation is used.**
+""")
 
 # ==========================================
-# 🛠️ HOW IT WORKS (TEACHER VIEW)
+# 🛠️ SYSTEM ARCHITECTURE (FOR TEACHERS/BOARD)
 # ==========================================
-with st.expander("ℹ️ Technical Architecture: How this App Works"):
+with st.expander("ℹ️ Technical Architecture: How this App Works (Backend Logic)"):
     st.markdown("""
-    ### **System Workflow**
-    1.  **Input:** Takes raw text inputs (e.g., "Very Often").
-    2.  **Processing:** Converts text to numbers & maps to 33 feature columns.
-    3.  **AI Engine:** Uses `RandomForest` + `GradientBoosting` (Hybrid) to predict probabilities.
-    4.  **Decision:** Decodes probabilities into labels (e.g., Severe) and flags the dominant issue.
+    ### **System Workflow & ML Pipeline**
+    This section explains how the **Frontend (UI)** connects to the **Backend (AI Engine)** for real-time prediction.
+
+    #### **Step 1: Frontend Layer (User Input)**
+    * **Data Collection:** The user provides raw inputs via the Streamlit Interface (7 Demographics + 26 Psychometric Questions).
+    * **No Calculation:** The frontend **does NOT** calculate any scores. It collects raw text data (e.g., *"Very Often"*).
+
+    #### **Step 2: Backend Preprocessing (Transformation Layer)**
+    * **Text-to-Numeric Mapping:** A backend script converts text inputs into numerical values using Regex (e.g., *"18-22"* $\\rightarrow$ `18.0`).
+    * **Feature Alignment:** The system maps the inputs to the exact **33 Feature Columns** used during training.
+    
+    #### **Step 3: AI Inference Engine (The Core)**
+    * **Model:** We use a pre-trained **Hybrid Ensemble Model** combining **Random Forest** and **Gradient Boosting**.
+    * **Process:** The model analyzes the input pattern against 2000+ student records to predict probabilities.
+
+    #### **Step 4: Decision Layer (Emotion Detection)**
+    * **Probability Decoding:** The system extracts confidence scores and maps them to human-readable labels (e.g., "Severe").
+    * **Dominant Issue Logic:** It compares confidence scores to identify the **Primary Mental Health Issue**.
     """)
 
 st.divider()
 
 # --- SIDEBAR: DEMOGRAPHICS ---
 st.sidebar.header("📝 Student Profile")
+
 def get_index(options, default_idx=0):
     return 0 if st.session_state.reset else default_idx
 
@@ -83,7 +131,7 @@ scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], inde
 
 # --- MAIN FORM ---
 st.subheader("📋 Self-Assessment Questionnaire")
-st.info("Select options that describe your feelings.")
+st.info("Select options that describe your feelings over the last 2 weeks.")
 
 options_map = {
     "Not at all / Never": 0,
@@ -106,7 +154,7 @@ q_labels = [
 
 answers = []
 cols = st.columns(2)
-key_modifier = str(st.session_state.reset) 
+key_modifier = str(st.session_state.reset)
 
 for i, q in enumerate(q_labels):
     with cols[i % 2]:
@@ -122,9 +170,11 @@ st.divider()
 analyze_btn = st.button("🚀 Analyze My Mental Health", type="primary")
 
 if analyze_btn:
+    # 1. Preprocessing
     age_numeric = extract_number(age_input)
     cgpa_numeric = extract_number(cgpa_input)
     
+    # 2. Map Inputs
     input_dict = {}
     if len(feature_columns) == 33:
         input_dict[feature_columns[0]] = age_numeric
@@ -144,6 +194,7 @@ if analyze_btn:
                 probs = model.predict_proba(input_df)
             
             st.subheader("📊 AI Diagnosis Result")
+            
             result_cols = st.columns(3)
             conditions = ['Anxiety', 'Stress', 'Depression']
             risk_scores = []
@@ -155,41 +206,62 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
-                # --- SMART LABEL FIX ---
-                # UI তে দেখানোর জন্য লেবেল সুন্দর করা
-                display_label = label
-                if label == "Minimal Anxiety": display_label = "No Anxiety / Healthy"
-                if label == "Low Stress": display_label = "No Stress / Healthy"
-                if label == "No Depression" or label == "Minimal Depression": display_label = "No Depression / Healthy"
-
-                # Check healthy status
+                # Logic: Healthy if label indicates minimal/low/none
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
                 with result_cols[i]:
                     st.markdown(f"**{cond}**")
                     if is_healthy:
-                        st.success(f"✅ {display_label}")
+                        st.success(f"✅ {label}")
                         st.caption(f"Confidence: {confidence:.1f}%")
                         risk_scores.append((cond, 0))
                         healthy_count += 1
                     else:
-                        st.error(f"⚠️ {display_label}")
+                        st.error(f"⚠️ {label}")
                         st.progress(int(confidence))
                         st.caption(f"Severity: {confidence:.1f}%")
                         risk_scores.append((cond, confidence))
 
             st.divider()
             
+            # --- VISUALIZATION: RADAR CHART ---
+            st.subheader("📈 Emotional Balance Map")
+            # Prepare data: Use risk scores (if 0, we show small value for visuals)
+            viz_scores = [score if score > 0 else 10 for _, score in risk_scores]
+            
+            df_chart = pd.DataFrame({
+                'Condition': conditions,
+                'Risk Level': viz_scores
+            })
+            
+            fig = px.line_polar(df_chart, r='Risk Level', theta='Condition', line_close=True,
+                                title="Your Mental Health Footprint", range_r=[0, 100])
+            fig.update_traces(fill='toself')
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.divider()
+
+            # --- FINAL DECISION & RECOMMENDATIONS ---
             if healthy_count == 3:
                 st.balloons()
                 st.success("🎉 **Diagnosis: Mentally Healthy**")
-                st.write("The AI analysis indicates no significant mental health issues. Keep it up!")
+                st.markdown("Your responses indicate a balanced mental state. Keep maintaining your positive lifestyle!")
+                
+                with st.expander("🌟 Tips to Maintain Wellness"):
+                    for tip in get_recommendations("Healthy"):
+                        st.markdown(tip)
             else:
                 dominant = max(risk_scores, key=lambda x: x[1])
                 st.error(f"🚨 **Primary Area of Concern:** {dominant[0]}")
-                st.write(f"Patterns suggest potential issues with **{dominant[0]}**. Consider consulting a professional.")
-            
+                st.write(f"The AI model has detected patterns consistent with **{dominant[0]}**.")
+                
+                st.subheader(f"💡 Recommended Actions for {dominant[0]}")
+                for tip in get_recommendations(dominant[0]):
+                    st.info(tip)
+                
+                st.warning("⚠️ *Disclaimer: This AI tool is for screening purposes only and is not a substitute for professional medical advice.*")
+
         except Exception as e:
             st.error(f"Prediction Error: {e}")
     else:
-        st.error("Feature column count mismatch!")
+        st.error("Feature column count mismatch! Please re-download feature_columns.pkl.")
