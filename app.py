@@ -3,9 +3,12 @@ import pandas as pd
 import numpy as np
 import joblib
 import re
+import warnings  # <--- New
+warnings.filterwarnings("ignore") # <--- New: This hides the warnings
 
 # Page Config
 st.set_page_config(page_title="Student Mental Health AI", page_icon="🧠", layout="wide")
+# ... বাকি সব আগের মতো ...
 
 # --- RESET LOGIC ---
 if 'reset' not in st.session_state:
