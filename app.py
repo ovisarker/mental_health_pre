@@ -3,12 +3,9 @@ import pandas as pd
 import numpy as np
 import joblib
 import re
-import warnings  # <--- New
-warnings.filterwarnings("ignore") # <--- New: This hides the warnings
 
 # Page Config
 st.set_page_config(page_title="Student Mental Health AI", page_icon="🧠", layout="wide")
-# ... বাকি সব আগের মতো ...
 
 # --- RESET LOGIC ---
 if 'reset' not in st.session_state:
@@ -24,7 +21,6 @@ def load_resources():
     try:
         model = joblib.load('mental_health_hybrid_model.pkl')
         encoders = joblib.load('label_encoders.pkl')
-        # Load the EXACT column names used during training
         feature_columns = joblib.load('feature_columns.pkl')
         return model, encoders, feature_columns
     except Exception as e:
@@ -53,13 +49,45 @@ with col2:
     if st.button("🔄 Reset All", type="primary"):
         reset_app()
 
-st.markdown("This system uses a **Hybrid ML Model** trained on raw student data. It analyzes patterns, not just scores.")
+st.markdown("""
+This system uses a **Hybrid Machine Learning Model** (Random Forest + Gradient Boosting) trained on raw student data. 
+It analyzes behavioral patterns to predict mental health conditions. **No manual scoring or rule-based calculation is used.**
+""")
+
+# ==========================================
+# 🛠️ SYSTEM ARCHITECTURE (FOR TEACHERS/BOARD)
+# ==========================================
+with st.expander("ℹ️ Technical Architecture: How this App Works (Backend Logic)"):
+    st.markdown("""
+    ### **System Workflow & ML Pipeline**
+    This section explains how the **Frontend (UI)** connects to the **Backend (AI Engine)** for real-time prediction.
+
+    #### **Step 1: Frontend Layer (User Input)**
+    * **Data Collection:** The user provides raw inputs via the Streamlit Interface (7 Demographics + 26 Psychometric Questions).
+    * **No Calculation:** The frontend **does NOT** calculate any scores (e.g., PHQ-9 total). It simply collects raw text data (e.g., *"Very Often"*).
+
+    #### **Step 2: Backend Preprocessing (Transformation Layer)**
+    * **Text-to-Numeric Mapping:** A backend script converts text inputs into numerical values using Regex (e.g., *"18-22"* $\\rightarrow$ `18.0`).
+    * **Feature Alignment:** The system maps the inputs to the exact **33 Feature Columns** used during training to ensure data consistency.
+    
+    #### **Step 3: AI Inference Engine (The Core)**
+    * **Model:** We use a pre-trained **Hybrid Ensemble Model** (`mental_health_hybrid_model.pkl`) combining **Random Forest** and **Gradient Boosting**.
+    * **Process:** ```python
+        # The model takes the dataframe and returns probability distributions
+        probs = model.predict_proba(input_df)
+        ```
+    * **Pattern Recognition:** The model analyzes the input pattern against 2000+ student records to determine the likelihood of Anxiety, Stress, and Depression.
+
+    #### **Step 4: Decision Layer (Emotion Detection)**
+    * **Probability Decoding:** The system extracts the confidence score (e.g., 85%) and maps the predicted class index to human-readable labels (e.g., "Severe") using `label_encoders.pkl`.
+    * **Dominant Issue Logic:** The algorithm compares confidence scores across all conditions and flags the one with the highest probability as the **Primary Mental Health Issue**.
+    """)
+
 st.divider()
 
 # --- SIDEBAR: DEMOGRAPHICS ---
 st.sidebar.header("📝 Student Profile")
 
-# Default values based on Reset State
 def get_index(options, default_idx=0):
     return 0 if st.session_state.reset else default_idx
 
@@ -71,7 +99,7 @@ year = st.sidebar.selectbox("5. Academic Year", ['First Year', 'Second Year', 'T
 cgpa_input = st.sidebar.text_input("6. Current CGPA", value="" if st.session_state.reset else "3.50")
 scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], index=get_index(2))
 
-# --- MAIN FORM: 26 QUESTIONS ---
+# --- MAIN FORM ---
 st.subheader("📋 Self-Assessment Questionnaire")
 st.info("Select options that describe your feelings.")
 
@@ -82,7 +110,6 @@ options_map = {
     "Nearly every day / Very Often": 3
 }
 
-# Questions (Short descriptions for UI)
 q_labels = [
     "Q1. Upset due to academic affairs?", "Q2. Unable to control important things?", "Q3. Nervous and stressed?", 
     "Q4. Could not cope with mandatory activities?", "Q5. Confident about handling problems?", "Q6. Things going your way?", 
@@ -97,18 +124,14 @@ q_labels = [
 
 answers = []
 cols = st.columns(2)
-
-# Reset state handling for selectboxes
 key_modifier = str(st.session_state.reset) 
 
 for i, q in enumerate(q_labels):
     with cols[i % 2]:
-        # If reset is True, force index 0 ('Not at all')
         idx = 0 if st.session_state.reset else 0
         val = st.selectbox(q, list(options_map.keys()), index=idx, key=f"q_{i}_{key_modifier}")
         answers.append(options_map[val])
 
-# Turn off reset flag after rendering
 if st.session_state.reset:
     st.session_state.reset = False
 
@@ -117,35 +140,23 @@ st.divider()
 analyze_btn = st.button("🚀 Analyze My Mental Health", type="primary")
 
 if analyze_btn:
-    
-    # 1. Preprocessing
     age_numeric = extract_number(age_input)
     cgpa_numeric = extract_number(cgpa_input)
     
-    # 2. Map Inputs to EXACT Feature Columns from Training
-    # We create a dictionary first
     input_dict = {}
-    
-    # Map Demographics (Assumes the first 7 columns in feature_columns are demographics)
-    # We iterate through the saved column names to ensure exact match
-    
     if len(feature_columns) == 33:
-        input_dict[feature_columns[0]] = age_numeric      # Age
-        input_dict[feature_columns[1]] = gender           # Gender
-        input_dict[feature_columns[2]] = uni              # University
-        input_dict[feature_columns[3]] = dept             # Department
-        input_dict[feature_columns[4]] = year             # Year
-        input_dict[feature_columns[5]] = cgpa_numeric     # CGPA
-        input_dict[feature_columns[6]] = scholarship      # Scholarship
-        
-        # Map Questions (Next 26 columns)
+        input_dict[feature_columns[0]] = age_numeric
+        input_dict[feature_columns[1]] = gender
+        input_dict[feature_columns[2]] = uni
+        input_dict[feature_columns[3]] = dept
+        input_dict[feature_columns[4]] = year
+        input_dict[feature_columns[5]] = cgpa_numeric
+        input_dict[feature_columns[6]] = scholarship
         for i in range(26):
             input_dict[feature_columns[7+i]] = answers[i]
             
-        # Create DataFrame
         input_df = pd.DataFrame([input_dict])
         
-        # 3. Inference
         try:
             with st.spinner("AI Model is analyzing patterns..."):
                 probs = model.predict_proba(input_df)
@@ -162,7 +173,6 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
-                # Logic: Healthy if "Minimal", "Low", "None", "No Depression"
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
                 with result_cols[i]:
@@ -179,7 +189,6 @@ if analyze_btn:
 
             st.divider()
             
-            # Dominant Issue Logic
             if all(score == 0 for _, score in risk_scores):
                 st.balloons()
                 st.success("🎉 **Great News!** No significant mental health issues detected.")
@@ -190,7 +199,5 @@ if analyze_btn:
             
         except Exception as e:
             st.error(f"Prediction Error: {e}")
-            st.write("Debug: Feature name mismatch. Please check pkl files.")
-            
     else:
-        st.error("Feature column count mismatch! Please re-download feature_columns.pkl from Colab.")
+        st.error("Feature column count mismatch! Please re-download feature_columns.pkl.")
