@@ -38,7 +38,7 @@ def extract_number(text):
         return 0.0
 
 # Header
-st.title("🧠 AI-Powered Student Mental Health Assessment")
+st.title("🧠 Student Mental Health Assessment")
 st.markdown("This system uses a **Hybrid Machine Learning Model** to analyze patterns from your inputs. No manual scoring is involved.")
 st.divider()
 
