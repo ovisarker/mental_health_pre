@@ -32,21 +32,19 @@ if model is None:
     st.error("🚨 Model files missing! Please ensure .pkl files are in GitHub.")
     st.stop()
 
-# Helper: Extract numbers safely
+# Helper: Extract numbers
 def extract_number(text):
     try:
         if pd.isna(text): return 0.0
         text_str = str(text)
-        # Handle ranges like "18-22"
         if '-' in text_str:
             return float(text_str.split('-')[0].strip())
-        # Handle mixed text like "3.50 (Good)"
         match = re.search(r"[-+]?\d*\.\d+|\d+", text_str)
         return float(match.group()) if match else 0.0
     except:
         return 0.0
 
-# --- HEADER & RESET BUTTON ---
+# --- HEADER ---
 col1, col2 = st.columns([8, 2])
 with col1:
     st.title("🧠 AI-Powered Student Mental Health Assessment")
@@ -54,49 +52,27 @@ with col2:
     if st.button("🔄 Reset All", type="primary"):
         reset_app()
 
-st.markdown("""
-This system uses a **Hybrid Machine Learning Model** (Random Forest + Gradient Boosting) trained on raw student data. 
-It analyzes behavioral patterns to predict mental health conditions. **No manual scoring or rule-based calculation is used.**
-""")
+st.markdown("This system uses a **Hybrid ML Model** to analyze behavioral patterns. No manual scoring is used.")
 
 # ==========================================
-# 🛠️ SYSTEM ARCHITECTURE (FOR TEACHERS/BOARD)
+# 🛠️ HOW IT WORKS (TEACHER VIEW)
 # ==========================================
-with st.expander("ℹ️ Technical Architecture: How this App Works (Backend Logic)"):
+with st.expander("ℹ️ Technical Architecture: How this App Works"):
     st.markdown("""
-    ### **System Workflow & ML Pipeline**
-    This section explains how the **Frontend (UI)** connects to the **Backend (AI Engine)** for real-time prediction.
-
-    #### **Step 1: Frontend Layer (User Input)**
-    * **Data Collection:** The user provides raw inputs via the Streamlit Interface (7 Demographics + 26 Psychometric Questions).
-    * **No Calculation:** The frontend **does NOT** calculate any scores (e.g., PHQ-9 total). It simply collects raw text data (e.g., *"Very Often"*).
-
-    #### **Step 2: Backend Preprocessing (Transformation Layer)**
-    * **Text-to-Numeric Mapping:** A backend script converts text inputs into numerical values using Regex (e.g., *"18-22"* $\\rightarrow$ `18.0`).
-    * **Feature Alignment:** The system maps the inputs to the exact **33 Feature Columns** used during training to ensure data consistency.
-    
-    #### **Step 3: AI Inference Engine (The Core)**
-    * **Model:** We use a pre-trained **Hybrid Ensemble Model** (`mental_health_hybrid_model.pkl`) combining **Random Forest** and **Gradient Boosting**.
-    * **Process:** ```python
-        # The model takes the dataframe and returns probability distributions
-        probs = model.predict_proba(input_df)
-        ```
-    * **Pattern Recognition:** The model analyzes the input pattern against 2000+ student records to determine the likelihood of Anxiety, Stress, and Depression.
-
-    #### **Step 4: Decision Layer (Emotion Detection)**
-    * **Probability Decoding:** The system extracts the confidence score (e.g., 85%) and maps the predicted class index to human-readable labels (e.g., "Severe") using `label_encoders.pkl`.
-    * **Dominant Issue Logic:** The algorithm compares confidence scores across all conditions and flags the one with the highest probability as the **Primary Mental Health Issue**.
+    ### **System Workflow**
+    1.  **Input:** Takes raw text inputs (e.g., "Very Often").
+    2.  **Processing:** Converts text to numbers & maps to 33 feature columns.
+    3.  **AI Engine:** Uses `RandomForest` + `GradientBoosting` (Hybrid) to predict probabilities.
+    4.  **Decision:** Decodes probabilities into labels (e.g., Severe) and flags the dominant issue.
     """)
 
 st.divider()
 
 # --- SIDEBAR: DEMOGRAPHICS ---
 st.sidebar.header("📝 Student Profile")
-
 def get_index(options, default_idx=0):
     return 0 if st.session_state.reset else default_idx
 
-# Demographic Inputs
 age_input = st.sidebar.selectbox("1. Age Group", ['18-22', '23-26', '27-30', 'Above 30'], index=get_index(4))
 gender = st.sidebar.selectbox("2. Gender", ['Male', 'Female'], index=get_index(2))
 uni = st.sidebar.selectbox("3. University Type", ['Public', 'Private'], index=get_index(2))
@@ -107,7 +83,7 @@ scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], inde
 
 # --- MAIN FORM ---
 st.subheader("📋 Self-Assessment Questionnaire")
-st.info("Select options that describe your feelings over the last 2 weeks.")
+st.info("Select options that describe your feelings.")
 
 options_map = {
     "Not at all / Never": 0,
@@ -146,16 +122,11 @@ st.divider()
 analyze_btn = st.button("🚀 Analyze My Mental Health", type="primary")
 
 if analyze_btn:
-    # 1. Preprocessing
     age_numeric = extract_number(age_input)
     cgpa_numeric = extract_number(cgpa_input)
     
-    # 2. Map Inputs to EXACT Feature Columns
     input_dict = {}
-    
-    # Check if feature_columns loaded correctly
     if len(feature_columns) == 33:
-        # Map Demographics
         input_dict[feature_columns[0]] = age_numeric
         input_dict[feature_columns[1]] = gender
         input_dict[feature_columns[2]] = uni
@@ -163,8 +134,6 @@ if analyze_btn:
         input_dict[feature_columns[4]] = year
         input_dict[feature_columns[5]] = cgpa_numeric
         input_dict[feature_columns[6]] = scholarship
-        
-        # Map Questions
         for i in range(26):
             input_dict[feature_columns[7+i]] = answers[i]
             
@@ -175,7 +144,6 @@ if analyze_btn:
                 probs = model.predict_proba(input_df)
             
             st.subheader("📊 AI Diagnosis Result")
-            
             result_cols = st.columns(3)
             conditions = ['Anxiety', 'Stress', 'Depression']
             risk_scores = []
@@ -187,39 +155,41 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
-                # Logic: Healthy if label indicates minimal/low/none
+                # --- SMART LABEL FIX ---
+                # UI তে দেখানোর জন্য লেবেল সুন্দর করা
+                display_label = label
+                if label == "Minimal Anxiety": display_label = "No Anxiety / Healthy"
+                if label == "Low Stress": display_label = "No Stress / Healthy"
+                if label == "No Depression" or label == "Minimal Depression": display_label = "No Depression / Healthy"
+
+                # Check healthy status
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
                 with result_cols[i]:
                     st.markdown(f"**{cond}**")
                     if is_healthy:
-                        st.success(f"✅ {label}")
+                        st.success(f"✅ {display_label}")
                         st.caption(f"Confidence: {confidence:.1f}%")
-                        risk_scores.append((cond, 0)) # Zero risk
+                        risk_scores.append((cond, 0))
                         healthy_count += 1
                     else:
-                        st.error(f"⚠️ {label}")
+                        st.error(f"⚠️ {display_label}")
                         st.progress(int(confidence))
-                        st.caption(f"Severity Confidence: {confidence:.1f}%")
+                        st.caption(f"Severity: {confidence:.1f}%")
                         risk_scores.append((cond, confidence))
 
             st.divider()
             
-            # --- FINAL DECISION LOGIC ---
             if healthy_count == 3:
                 st.balloons()
-                st.success("🎉 **Diagnosis: No Significant Mental Health Issues Found**")
-                st.markdown("""
-                Based on your inputs, the AI indicates that you are currently in a **healthy mental state**. 
-                Keep maintaining your positive lifestyle!
-                """)
+                st.success("🎉 **Diagnosis: Mentally Healthy**")
+                st.write("The AI analysis indicates no significant mental health issues. Keep it up!")
             else:
                 dominant = max(risk_scores, key=lambda x: x[1])
                 st.error(f"🚨 **Primary Area of Concern:** {dominant[0]}")
-                st.write(f"The AI model has detected patterns consistent with **{dominant[0]}**. This is based on probabilistic analysis of your responses.")
+                st.write(f"Patterns suggest potential issues with **{dominant[0]}**. Consider consulting a professional.")
             
         except Exception as e:
             st.error(f"Prediction Error: {e}")
-            st.write("Debug: Feature name mismatch. Please check pkl files.")
     else:
-        st.error("Feature column count mismatch! Please re-download feature_columns.pkl from Colab.")
+        st.error("Feature column count mismatch!")
