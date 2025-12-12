@@ -32,11 +32,16 @@ if model is None:
     st.error("🚨 Model files missing! Please ensure .pkl files are in GitHub.")
     st.stop()
 
-# Helper: Extract numbers
+# Helper: Extract numbers safely
 def extract_number(text):
     try:
         if pd.isna(text): return 0.0
-        match = re.search(r"[-+]?\d*\.\d+|\d+", str(text))
+        text_str = str(text)
+        # Handle ranges like "18-22"
+        if '-' in text_str:
+            return float(text_str.split('-')[0].strip())
+        # Handle mixed text like "3.50 (Good)"
+        match = re.search(r"[-+]?\d*\.\d+|\d+", text_str)
         return float(match.group()) if match else 0.0
     except:
         return 0.0
@@ -91,6 +96,7 @@ st.sidebar.header("📝 Student Profile")
 def get_index(options, default_idx=0):
     return 0 if st.session_state.reset else default_idx
 
+# Demographic Inputs
 age_input = st.sidebar.selectbox("1. Age Group", ['18-22', '23-26', '27-30', 'Above 30'], index=get_index(4))
 gender = st.sidebar.selectbox("2. Gender", ['Male', 'Female'], index=get_index(2))
 uni = st.sidebar.selectbox("3. University Type", ['Public', 'Private'], index=get_index(2))
@@ -101,7 +107,7 @@ scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], inde
 
 # --- MAIN FORM ---
 st.subheader("📋 Self-Assessment Questionnaire")
-st.info("Select options that describe your feelings.")
+st.info("Select options that describe your feelings over the last 2 weeks.")
 
 options_map = {
     "Not at all / Never": 0,
@@ -140,11 +146,16 @@ st.divider()
 analyze_btn = st.button("🚀 Analyze My Mental Health", type="primary")
 
 if analyze_btn:
+    # 1. Preprocessing
     age_numeric = extract_number(age_input)
     cgpa_numeric = extract_number(cgpa_input)
     
+    # 2. Map Inputs to EXACT Feature Columns
     input_dict = {}
+    
+    # Check if feature_columns loaded correctly
     if len(feature_columns) == 33:
+        # Map Demographics
         input_dict[feature_columns[0]] = age_numeric
         input_dict[feature_columns[1]] = gender
         input_dict[feature_columns[2]] = uni
@@ -152,6 +163,8 @@ if analyze_btn:
         input_dict[feature_columns[4]] = year
         input_dict[feature_columns[5]] = cgpa_numeric
         input_dict[feature_columns[6]] = scholarship
+        
+        # Map Questions
         for i in range(26):
             input_dict[feature_columns[7+i]] = answers[i]
             
@@ -166,6 +179,7 @@ if analyze_btn:
             result_cols = st.columns(3)
             conditions = ['Anxiety', 'Stress', 'Depression']
             risk_scores = []
+            healthy_count = 0
             
             for i, cond in enumerate(conditions):
                 prob_arr = probs[i][0]
@@ -173,6 +187,7 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
+                # Logic: Healthy if label indicates minimal/low/none
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
                 with result_cols[i]:
@@ -180,7 +195,8 @@ if analyze_btn:
                     if is_healthy:
                         st.success(f"✅ {label}")
                         st.caption(f"Confidence: {confidence:.1f}%")
-                        risk_scores.append((cond, 0))
+                        risk_scores.append((cond, 0)) # Zero risk
+                        healthy_count += 1
                     else:
                         st.error(f"⚠️ {label}")
                         st.progress(int(confidence))
@@ -189,9 +205,14 @@ if analyze_btn:
 
             st.divider()
             
-            if all(score == 0 for _, score in risk_scores):
+            # --- FINAL DECISION LOGIC ---
+            if healthy_count == 3:
                 st.balloons()
-                st.success("🎉 **Great News!** No significant mental health issues detected.")
+                st.success("🎉 **Diagnosis: No Significant Mental Health Issues Found**")
+                st.markdown("""
+                Based on your inputs, the AI indicates that you are currently in a **healthy mental state**. 
+                Keep maintaining your positive lifestyle!
+                """)
             else:
                 dominant = max(risk_scores, key=lambda x: x[1])
                 st.error(f"🚨 **Primary Area of Concern:** {dominant[0]}")
@@ -199,5 +220,6 @@ if analyze_btn:
             
         except Exception as e:
             st.error(f"Prediction Error: {e}")
+            st.write("Debug: Feature name mismatch. Please check pkl files.")
     else:
-        st.error("Feature column count mismatch! Please re-download feature_columns.pkl.")
+        st.error("Feature column count mismatch! Please re-download feature_columns.pkl from Colab.")
