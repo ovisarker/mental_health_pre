@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS for Friendly UI
 st.markdown("""
 <style>
     div[data-testid="metric-container"] {
@@ -304,6 +304,7 @@ year_map = {'১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second 
 year_model = year_map.get(year_input, year_input)
 
 # --- QUESTIONNAIRE (RADIO BUTTONS) ---
+
 st.subheader(f"👋 Hello, {student_name}")
 st.subheader(t['section_title'])
 st.info(t['instructions'])
