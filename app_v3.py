@@ -36,7 +36,7 @@ st.markdown("""
 translations = {
     "English": {
         "title": "Student Mental Health Assessment",
-        "subtitle": "ML-based Screening System (Bilingual)",
+        "subtitle": "ML-based Mental Health Screening System",
         "lang_label": "🌐 Language / ভাষা",
         "reset_btn": "🔄 Reset System",
         "sidebar_title": "📝 Student Profile (Required)",
