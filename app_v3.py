@@ -19,51 +19,16 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CRITICAL CSS FIXES ---
+# Custom CSS (FIXED TEXT VISIBILITY)
 st.markdown("""
 <style>
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
-    
-    .emergency-box {
-        background-color: #ffebee; 
-        border: 2px solid #ef5350; 
-        padding: 15px; 
-        border-radius: 10px; 
-        color: #c62828 !important; 
-        margin: 14px 0;
-    }
-    
-    /* FORCE BLACK TEXT for Suggestions */
-    .suggestion-box {
-        background-color: #f0f7ff; 
-        padding: 15px; 
-        border-radius: 10px; 
-        border-left: 5px solid #007bff; 
-        margin: 10px 0; 
-        color: #000000 !important;
-    }
-    
-    .suggestion-severe {
-        background-color: #fff3cd; 
-        padding: 15px; 
-        border-radius: 10px; 
-        border-left: 5px solid #ffc107; 
-        margin: 10px 0; 
-        color: #000000 !important;
-    }
-    
-    .locked-hint {
-        background-color: #f8f9fa; 
-        border: 1px solid #ddd; 
-        padding: 14px; 
-        border-radius: 10px; 
-        color: #333 !important;
-    }
-    
-    /* LIST TEXT COLOR FIX */
-    li {
-        color: #000000 !important;
-    }
+    .emergency-box {background:#ffebee; border:2px solid #ef5350; padding:15px; border-radius:10px; color:#c62828; margin:14px 0;}
+    /* Suggestion Box Styling - Black Text for Visibility */
+    .suggestion-box {background:#f0f7ff; padding:15px; border-radius:10px; border-left:5px solid #007bff; margin:10px 0; color: #000000;}
+    .suggestion-severe {background:#fff3cd; padding:15px; border-radius:10px; border-left:5px solid #ffc107; margin:10px 0; color: #000000;}
+    .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #333;}
+    /* Hide Radio Label hack removed to ensure visibility */
 </style>
 """, unsafe_allow_html=True)
 
@@ -430,19 +395,18 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
-    # --- DIRECT SUGGESTIONS SECTION ---
+    # --- SUGGESTIONS ---
     st.markdown("---")
     
-    # Identify Concerns
-    concerns = [r for r in risk_data if not r[4]] # Filter low risk
-    concerns.sort(key=lambda x: x[1], reverse=True) # Sort by confidence
+    concerns = [r for r in risk_data if not r[4]]
+    concerns.sort(key=lambda x: x[1], reverse=True)
 
     if not concerns:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
-        # 1. Show Overall Issue prominently
-        top_issue = concerns[0] # (cond, conf, label, bucket, is_low)
+        # Show Overall Issue prominently
+        top_issue = concerns[0]
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
         r_txt.append(f"\n{t['overall_label']} {top_issue[0]} ({top_issue[2]})")
