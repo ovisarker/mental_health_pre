@@ -19,10 +19,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CUSTOM CSS (VISUAL FIXES) ---
+# --- CUSTOM CSS (SAFE & SCOPED) ---
 st.markdown("""
 <style>
-    /* 1. Main UI Elements */
+    /* 1. General UI Elements */
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
     
     .emergency-box {
@@ -34,6 +34,15 @@ st.markdown("""
         margin: 14px 0;
     }
     
+    .locked-hint {
+        background-color: #f8f9fa; 
+        border: 1px solid #ddd; 
+        padding: 14px; 
+        border-radius: 10px; 
+        color: #333 !important;
+    }
+
+    /* 2. SUGGESTION BOXES (Scoped Black Text) */
     .suggestion-box {
         background-color: #f0f7ff; 
         padding: 15px; 
@@ -51,59 +60,65 @@ st.markdown("""
         margin: 10px 0; 
         color: #000000 !important;
     }
-    
-    .locked-hint {
-        background-color: #f8f9fa; 
-        border: 1px solid #ddd; 
-        padding: 14px; 
-        border-radius: 10px; 
-        color: #333 !important;
+
+    /* Ensure lists INSIDE suggestions are black */
+    .suggestion-box ul, .suggestion-box li, 
+    .suggestion-severe ul, .suggestion-severe li {
+        color: #000000 !important;
     }
-    
-    li { color: #000000 !important; }
 
     /* ============================
-       SELECTBOX FIX (SUPER FORCE BLACK)
+       3. SELECTBOX FIX (SAFE NUCLEAR)
+       Scoped to BaseWeb components only
        ============================ */
 
-    /* 1. Force background to white for the main box and popup */
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="popover"],
-    ul[role="listbox"], 
-    div[role="listbox"] {
-        background-color: #ffffff !important;
-        border-color: #cccccc !important;
+    /* White background for closed selectbox */
+    div[data-baseweb="select"] > div {
+      background-color: #ffffff !important;
+      border-color: #cccccc !important;
     }
 
-    /* 2. Force ALL text inside the selectbox to be BLACK (The fix) */
+    /* Force all text INSIDE the closed selectbox to black */
     div[data-baseweb="select"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        caret-color: #000000 !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+      caret-color: #000000 !important;
     }
 
-    /* 3. Force ALL text inside the dropdown options to be BLACK */
-    li[role="option"] *,
-    div[role="option"] * {
-        color: #000000 !important;
+    /* White background for popover/portal dropdown */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div,
+    ul[role="listbox"],
+    div[role="listbox"],
+    div[data-baseweb="menu"] {
+      background-color: #ffffff !important;
+      border-color: #cccccc !important;
+    }
+
+    /* Force all text inside dropdown popover/listbox/menu to black */
+    div[data-baseweb="popover"] *,
+    ul[role="listbox"] *,
+    div[role="listbox"] *,
+    div[data-baseweb="menu"] * {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* Option row background + hover */
+    li[role="option"], div[role="option"] {
+      background-color: #ffffff !important;
+      color: #000000 !important;
     }
     
-    /* 4. Ensure background remains white for options */
-    li[role="option"],
-    div[role="option"] {
-        background-color: #ffffff !important;
-        color: #000000 !important;
+    li[role="option"]:hover, div[role="option"]:hover,
+    li[role="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
+      background-color: #e9ecef !important;
+      color: #000000 !important;
     }
 
-    /* 5. Hover state */
-    li[role="option"]:hover,
-    div[role="option"]:hover {
-        background-color: #e9ecef !important;
-    }
-
-    /* 6. Fix dropdown arrow icon */
+    /* Dropdown arrow icon */
     div[data-baseweb="select"] svg {
-        fill: #000000 !important;
+      fill: #000000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -366,7 +381,6 @@ if locked:
 # Validation logic
 name_clean = student_name.strip()
 valid_name = len(name_clean) >= 3 and any(c.isalpha() for c in name_clean)
-# Check against "Select" (internal value)
 is_valid = lambda x: x != "Select"
 
 if lock_btn:
@@ -399,6 +413,8 @@ with st.sidebar.expander(t["helpline_title"], expanded=True):
 📞 **Moner Bondhu:** 01779632588  
 🚑 **National Emergency:** 999
 """)
+
+
 
 # Gatekeeper
 if not st.session_state.profile_locked:
@@ -516,7 +532,6 @@ if analyze:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
-        # Show Overall Issue prominently
         top_issue = concerns[0] 
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
