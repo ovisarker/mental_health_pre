@@ -19,21 +19,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS
+# Custom CSS (FIXED TEXT VISIBILITY)
 st.markdown("""
 <style>
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
     .emergency-box {background:#ffebee; border:2px solid #ef5350; padding:15px; border-radius:10px; color:#c62828; margin:14px 0;}
-    .suggestion-box {background:#f8f9fa; padding:15px; border-radius:10px; border-left:5px solid #007bff; margin:10px 0;}
-    .suggestion-severe {background:#fff3e0; padding:15px; border-radius:10px; border-left:5px solid #ff9800; margin:10px 0;}
-    .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #555;}
-    /* Hide radio button labels */
-    div[data-testid="stRadio"] > label {display: none;} 
+    /* Suggestion Box Styling - Black Text for Visibility */
+    .suggestion-box {background:#f0f7ff; padding:15px; border-radius:10px; border-left:5px solid #007bff; margin:10px 0; color: #000000;}
+    .suggestion-severe {background:#fff3cd; padding:15px; border-radius:10px; border-left:5px solid #ffc107; margin:10px 0; color: #000000;}
+    .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #333;}
+    /* Hide Radio Label hack removed to ensure visibility */
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 2. TRANSLATIONS & TEXT ASSETS
+# 2. TRANSLATIONS
 # -----------------------------
 translations = {
     "English": {
@@ -172,7 +172,6 @@ def severity_bucket(label: str) -> str:
     return "Mild" 
 
 def get_suggestions(condition: str, bucket: str, lang: str):
-    # Direct, professional suggestions without casual tone
     tips_en = {
         "Anxiety": {
             "Mild": ["Practice controlled breathing exercises.", "Limit caffeine intake.", "Take short breaks outdoors."],
@@ -314,14 +313,16 @@ opts_map = {
 q_list = q_labels_bn if lang == "Bangla" else q_labels_en
 answers = []
 
-with st.form("qs_form"):
-    cL, cR = st.columns(2)
-    for i, q in enumerate(q_list):
-        with (cL if i % 2 == 0 else cR):
-            val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
-            answers.append(opts_map[val])
-            st.divider()
-    analyze = st.form_submit_button(t["analyze_btn"], type="primary", use_container_width=True)
+# --- DIRECT RENDERING (No Form) ---
+cL, cR = st.columns(2)
+for i, q in enumerate(q_list):
+    with (cL if i % 2 == 0 else cR):
+        # Use simple session state keying
+        val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}_{lang}")
+        answers.append(opts_map[val])
+        st.divider()
+
+analyze = st.button(t["analyze_btn"], type="primary", use_container_width=True)
 
 # --- RESULTS ---
 if analyze:
@@ -342,6 +343,7 @@ if analyze:
     with st.spinner(t["analyzing"]):
         probs = model.predict_proba(input_df)
 
+    # Q26 Safety check
     if answers[25] >= 2:
         st.markdown(f"<div class='emergency-box'><h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3><p>{t['emergency_text']}</p></div>", unsafe_allow_html=True)
 
@@ -350,7 +352,7 @@ if analyze:
 
     conds = ["Anxiety", "Stress", "Depression"]
     cards = st.columns(3)
-    risk_data = [] 
+    risk_data = [] # (cond, conf, label, bucket, is_low)
     
     r_txt = [
         "--- ASSESSMENT REPORT ---",
@@ -393,19 +395,18 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
-    # --- DIRECT SUGGESTIONS SECTION ---
+    # --- SUGGESTIONS ---
     st.markdown("---")
     
-    # Identify Concerns
-    concerns = [r for r in risk_data if not r[4]] # Filter low risk
-    concerns.sort(key=lambda x: x[1], reverse=True) # Sort by confidence
+    concerns = [r for r in risk_data if not r[4]]
+    concerns.sort(key=lambda x: x[1], reverse=True)
 
     if not concerns:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
-        # 1. Show Overall Issue prominently
-        top_issue = concerns[0] # (cond, conf, label, bucket, is_low)
+        # Show Overall Issue prominently
+        top_issue = concerns[0]
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
         r_txt.append(f"\n{t['overall_label']} {top_issue[0]} ({top_issue[2]})")
@@ -418,7 +419,8 @@ if analyze:
             style = "suggestion-severe" if is_severe else "suggestion-box"
             
             st.markdown(f"**{c} ({lbl})**")
-            st.markdown(f"<div class='{style}'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
+            # Using black color explicitly for visibility
+            st.markdown(f"<div class='{style}' style='color:black;'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
             
             r_txt.append(f"\n[{c} Suggestions]")
             r_txt.extend([f"- {tip}" for tip in tips])
