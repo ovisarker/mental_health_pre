@@ -19,25 +19,26 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS (FIXED: Removed the line that hid questions)
+# Custom CSS
 st.markdown("""
 <style>
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
     .emergency-box {background:#ffebee; border:2px solid #ef5350; padding:15px; border-radius:10px; color:#c62828; margin:14px 0;}
-    .suggestion-friendly {background:#e3f2fd; padding:14px; border-radius:10px; border-left:5px solid #2196f3; margin:10px 0; color: #0d47a1;}
-    .suggestion-serious {background:#fff3e0; padding:14px; border-radius:10px; border-left:5px solid #ff9800; margin:10px 0; color: #e65100;}
+    .suggestion-box {background:#f8f9fa; padding:15px; border-radius:10px; border-left:5px solid #007bff; margin:10px 0;}
+    .suggestion-severe {background:#fff3e0; padding:15px; border-radius:10px; border-left:5px solid #ff9800; margin:10px 0;}
     .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #555;}
+    /* Hide radio button labels */
+    div[data-testid="stRadio"] > label {display: none;} 
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 2. TRANSLATIONS
+# 2. TRANSLATIONS & TEXT ASSETS
 # -----------------------------
 translations = {
     "English": {
         "title": "Student Mental Health Assessment",
-        "subtitle": "ML-based Mental Health Screening System",
-        "lang_label": "🌐 Language / ভাষা",
+        "subtitle": "ML-based Screening System",
         "reset_btn": "🔄 Reset System",
         "sidebar_title": "📝 Student Profile (Required)",
         "name": "Student Name (Required)",
@@ -57,14 +58,15 @@ translations = {
         "analyze_btn": "🚀 Analyze My Mental Health",
         "analyzing": "Analyzing behavioral patterns...",
         "success": "✅ Assessment Complete",
-        "result_title": "📊 Your Wellness Result",
-        "suggestions": "💡 Friendly Suggestions",
-        "healthy_msg": "🎉 **You are doing great!**\nYour responses indicate a balanced mental state. Keep maintaining your routine and connection with others.",
+        "result_title": "📊 Assessment Result",
+        "suggestions": "💡 Suggestions",
+        "overall_label": "📌 Overall Mental Health Issue:",
+        "healthy_msg": "🎉 **Status: Healthy**\nYour responses indicate a balanced mental state. Maintain your current routine.",
         "download_btn": "📥 Download Report",
         "disclaimer_short": "⚠️ This is a screening tool for research purposes, not a clinical diagnosis.",
         "dev_by": "Developed by Team Dual Core",
         "helpline_title": "🆘 Emergency Helpline (BD)",
-        "emergency_text": "Your response indicates significant distress. Please contact a counselor/psychologist or call the helpline immediately.",
+        "emergency_text": "Your response indicates significant distress. Please contact a counselor/psychologist immediately.",
         "clinical_note": "⚠️ **Clinical Note:** Self-harm risk detected despite low overall score.",
         "select": "Select...",
         "genders": ["Select...", "Male", "Female"],
@@ -76,8 +78,7 @@ translations = {
     },
     "Bangla": {
         "title": "শিক্ষার্থী মানসিক স্বাস্থ্য মূল্যায়ন",
-        "subtitle": "মেশিন লার্নিং ভিত্তিক স্ক্রিনিং (দ্বিভাষিক)",
-        "lang_label": "🌐 Language / ভাষা",
+        "subtitle": "মেশিন লার্নিং ভিত্তিক স্ক্রিনিং সিস্টেম",
         "reset_btn": "🔄 রিসেট",
         "sidebar_title": "📝 শিক্ষার্থীর প্রোফাইল (আবশ্যক)",
         "name": "শিক্ষার্থীর নাম (আবশ্যক)",
@@ -97,14 +98,15 @@ translations = {
         "analyze_btn": "🚀 ফলাফল দেখুন",
         "analyzing": "বিশ্লেষণ করা হচ্ছে...",
         "success": "✅ মূল্যায়ন সম্পন্ন",
-        "result_title": "📊 আপনার ফলাফল",
+        "result_title": "📊 ফলাফল",
         "suggestions": "💡 পরামর্শ",
-        "healthy_msg": "🎉 **আপনি দারুণ আছেন!**\nআপনার মানসিক অবস্থা ভারসাম্যপূর্ণ মনে হচ্ছে। নিজের যত্ন নেওয়া চালিয়ে যান।",
+        "overall_label": "📌 সামগ্রিক মানসিক সমস্যা:",
+        "healthy_msg": "🎉 **অবস্থা: সুস্থ**\nআপনার মানসিক অবস্থা ভারসাম্যপূর্ণ মনে হচ্ছে। বর্তমান রুটিন বজায় রাখুন।",
         "download_btn": "📥 রিপোর্ট ডাউনলোড",
         "disclaimer_short": "⚠️ এটি একটি স্ক্রিনিং টুল, চিকিৎসার বিকল্প নয়।",
         "dev_by": "ডেভেলপ করেছে Team Dual Core",
         "helpline_title": "🆘 জরুরি হেল্পলাইন (BD)",
-        "emergency_text": "আপনার উত্তর মানসিক ঝুঁকির ইঙ্গিত দিচ্ছে। দয়া করে কাউন্সিলর/সাইকোলজিস্টের সাথে কথা বলুন অথবা হেল্পলাইনে কল করুন।",
+        "emergency_text": "আপনার উত্তর মানসিক ঝুঁকির ইঙ্গিত দিচ্ছে। দয়া করে কাউন্সিলর/সাইকোলজিস্টের সাথে যোগাযোগ করুন।",
         "clinical_note": "⚠️ **ক্লিনিক্যাল নোট:** সামগ্রিক স্কোর কম হলেও আত্মহানির ঝুঁকি দেখা যাচ্ছে।",
         "select": "সিলেক্ট করুন...",
         "genders": ["সিলেক্ট করুন...", "পুরুষ", "মহিলা"],
@@ -169,39 +171,40 @@ def severity_bucket(label: str) -> str:
     if "Moderate" in label: return "Moderate"
     return "Mild" 
 
-def friendly_tips(condition: str, bucket: str, lang: str):
+def get_suggestions(condition: str, bucket: str, lang: str):
+    # Direct, professional suggestions without casual tone
     tips_en = {
         "Anxiety": {
-            "Mild": ["👋 **Hey!** Take 5 slow breaths. Drink some water.", "☕ **Chill:** Skip the extra coffee today.", "📞 **Connect:** Talk to a friend for 5 minutes."],
-            "Moderate": ["📓 **Journal:** Write down your worries and close the notebook.", "🏃 **Move:** Go for a 10-15 min walk.", "📵 **Unplug:** Avoid phone screens 30 mins before sleep."],
-            "Severe/High": ["🩺 **Counselor:** Please talk to a university counselor.", "🆘 **Support:** Don't be alone right now—reach out to family.", "🚨 **Safety:** If you feel unsafe, call the helpline immediately."]
+            "Mild": ["Practice controlled breathing exercises.", "Limit caffeine intake.", "Take short breaks outdoors."],
+            "Moderate": ["Maintain a worry journal.", "Engage in regular physical activity.", "Reduce screen time before sleep."],
+            "Severe/High": ["Consult a university counselor.", "Reach out to a trusted family member.", "Contact the helpline if feeling unsafe."]
         },
         "Stress": {
-            "Mild": ["🎬 **Break:** Watch something funny or listen to music.", "📅 **Focus:** Do just one small task, don't overthink.", "🍕 **Treat:** Eat a healthy meal you enjoy."],
-            "Moderate": ["📝 **Plan:** Make a simple to-do list (Top 3 tasks only).", "🧘 **Relax:** Try light stretching or yoga.", "🗣️ **Share:** Ask for help instead of carrying it all alone."],
-            "Severe/High": ["🛑 **Pause:** You might be burning out. Take a break urgently.", "🩺 **Advisor:** Talk to your academic advisor or counselor.", "🚑 **Health:** High stress affects health. Prioritize rest."]
+            "Mild": ["Focus on one task at a time.", "Take short breaks during study sessions.", "Maintain a balanced diet."],
+            "Moderate": ["Create a prioritized to-do list.", "Practice muscle relaxation techniques.", "Discuss your academic load with a peer."],
+            "Severe/High": ["Seek guidance from an academic advisor.", "Ensure adequate sleep and rest.", "Consider professional stress management."]
         },
         "Depression": {
-            "Mild": ["🌞 **Sunlight:** Open the curtains or go outside for 10 mins.", "🧹 **Tidy:** Clean one small area (like your desk).", "💬 **Message:** Text a friend you trust."],
-            "Moderate": ["🚶 **Walk:** A short walk can help lift your mood.", "🎨 **Hobby:** Do something small you used to enjoy.", "📅 **Routine:** Stick to a simple routine for today."],
-            "Severe/High": ["🩺 **Professional:** Please see a psychologist or counselor.", "👨‍👩‍👧 **Family:** Tell a family member how you are feeling.", "🆘 **Urgent:** If you have thoughts of self-harm, call the helpline immediately."]
+            "Mild": ["Spend time in natural sunlight.", "Organize your immediate workspace.", "Connect with a friend or family member."],
+            "Moderate": ["Engage in a hobby or physical activity.", "Maintain a regular sleep schedule.", "Set small, achievable daily goals."],
+            "Severe/High": ["Seek professional psychological support.", "Confide in a trusted person.", "Contact emergency services if self-harm thoughts occur."]
         },
     }
     tips_bn = {
         "Anxiety": {
-            "Mild": ["👋 **হেই!** ৫ বার ধীরে শ্বাস নিন ও পানি পান করুন।", "☕ **চিল:** আজ ক্যাফেইন কমান।", "📞 **কথা বলুন:** বন্ধুর সাথে ৫ মিনিট কথা বলুন।"],
-            "Moderate": ["📓 **লিখুন:** দুশ্চিন্তাগুলো লিখে খাতা বন্ধ করে রাখুন।", "🏃 **হাঁটুন:** ১০–১৫ মিনিট হাঁটুন।", "📵 **ফোন দূরে:** ঘুমানোর আগে ৩০ মিনিট ফোন ব্যবহার করবেন না।"],
-            "Severe/High": ["🩺 **কাউন্সিলর:** দয়া করে কাউন্সিলর/সাইকোলজিস্টের সাথে কথা বলুন।", "🆘 **সাহায্য:** একাই থাকবেন না—পরিবার/বন্ধুকে জানান।", "🚨 **নিরাপত্তা:** ঝুঁকি মনে হলে সাথে সাথে হেল্পলাইনে কল করুন।"]
+            "Mild": ["নিয়ন্ত্রিত শ্বাস-প্রশ্বাসের ব্যায়াম করুন।", "ক্যাফেইন গ্রহণ সীমিত করুন।", "বাইরে কিছুক্ষণ বিরতি নিন।"],
+            "Moderate": ["দুশ্চিন্তাগুলো লিখে রাখুন।", "নিয়মিত শারীরিক ব্যায়াম করুন।", "ঘুমানোর আগে মোবাইল ব্যবহার কমান।"],
+            "Severe/High": ["বিশ্ববিদ্যালয়ের কাউন্সিলরের পরামর্শ নিন।", "বিশ্বস্ত পরিবারের সদস্যের সাথে কথা বলুন।", "নিরাপদ বোধ না করলে হেল্পলাইনে যোগাযোগ করুন।"]
         },
         "Stress": {
-            "Mild": ["🎬 **ব্রেক:** মজার কিছু দেখুন বা গান শুনুন।", "📅 **ফোকাস:** একবারে সব না—আজ শুধু ১টা ছোট কাজ করুন।", "🍕 **খাবার:** পছন্দের স্বাস্থ্যকর খাবার খান।"],
-            "Moderate": ["📝 **প্ল্যান:** Top-3 টু-ডু লিস্ট করুন।", "🧘 **রিলাক্স:** হালকা স্ট্রেচিং বা যোগব্যায়াম করুন।", "🗣️ **শেয়ার:** কারো সাহায্য নিন—একাই সব চাপ নেবেন না।"],
-            "Severe/High": ["🛑 **থামুন:** অতিরিক্ত চাপে ক্ষতি হচ্ছে—ব্রেক নিন।", "🩺 **অ্যাডভাইজার:** অ্যাডভাইজার বা কাউন্সিলরকে জানান।", "🚑 **স্বাস্থ্য:** বিশ্রাম জরুরি। খুব খারাপ লাগলে ডাক্তার দেখান।"]
+            "Mild": ["একবারে একটি কাজে মনোযোগ দিন।", "পড়ার মাঝে ছোট বিরতি নিন।", "সুষম খাবার গ্রহণ করুন।"],
+            "Moderate": ["কাজের অগ্রাধিকার তালিকা তৈরি করুন।", "পেশী শিথিলকরণ ব্যায়াম করুন।", "সহপাঠীর সাথে পড়াশোনার চাপ নিয়ে আলোচনা করুন।"],
+            "Severe/High": ["একাডেমিক অ্যাডভাইজারের পরামর্শ নিন।", "পর্যাপ্ত ঘুম এবং বিশ্রাম নিশ্চিত করুন।", "পেশাদার স্ট্রেস ম্যানেজমেন্টের সাহায্য নিন।"]
         },
         "Depression": {
-            "Mild": ["🌞 **রোদ:** পর্দা খুলে ১০ মিনিট রোদ নিন।", "🧹 **গোছানো:** টেবিল বা বিছানা একটু গুছান।", "💬 **মেসেজ:** বিশ্বাসভাজন কাউকে মেসেজ দিন।"],
-            "Moderate": ["🚶 **হাঁটা:** বাইরে একটু হেঁটে আসুন।", "🎨 **শখ:** ছোট একটা শখের কাজ করুন (গান/গেম)।", "📅 **রুটিন:** আজকের জন্য ছোট রুটিন ঠিক করুন।"],
-            "Severe/High": ["🩺 **পেশাদার:** দয়া করে সাইকোলজিস্ট দেখান।", "👨‍👩‍👧 **পরিবার:** পরিবারের কাউকে এখনই জানান।", "🆘 **জরুরি:** আত্মহানির চিন্তা থাকলে সাথে সাথে হেল্পলাইনে কল করুন।"]
+            "Mild": ["প্রাকৃতিক রোদে কিছু সময় কাটান।", "নিজের পড়ার টেবিল গুছিয়ে রাখুন।", "বন্ধু বা পরিবারের সাথে যোগাযোগ করুন।"],
+            "Moderate": ["শখের কাজ বা ব্যায়াম করুন।", "নিয়মিত ঘুমের রুটিন মেনে চলুন।", "ছোট এবং সহজ লক্ষ্য নির্ধারণ করুন।"],
+            "Severe/High": ["পেশাদার সাইকোলজিস্টের সাহায্য নিন।", "বিশ্বস্ত কারো সাথে কথা বলুন।", "আত্মহানির চিন্তা এলে জরুরি সেবায় যোগাযোগ করুন।"]
         },
     }
     dataset = tips_bn if lang == "Bangla" else tips_en
@@ -350,7 +353,7 @@ if analyze:
     risk_data = [] 
     
     r_txt = [
-        "--- WELLNESS REPORT ---",
+        "--- ASSESSMENT REPORT ---",
         f"Name: {student_name}",
         f"Date: {datetime.now().strftime('%Y-%m-%d')}",
         f"Profile: {gender_model}, {dept_model}, CGPA {cgpa_input:.2f}",
@@ -390,26 +393,35 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
+    # --- DIRECT SUGGESTIONS SECTION ---
     st.markdown("---")
-    st.subheader(t["suggestions"])
     
-    concerns = [r for r in risk_data if not r[4]]
-    concerns.sort(key=lambda x: x[1], reverse=True)
+    # Identify Concerns
+    concerns = [r for r in risk_data if not r[4]] # Filter low risk
+    concerns.sort(key=lambda x: x[1], reverse=True) # Sort by confidence
 
     if not concerns:
-        st.markdown(f"<div class='suggestion-friendly'>{t['healthy_msg']}</div>", unsafe_allow_html=True)
+        st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
+        # 1. Show Overall Issue prominently
+        top_issue = concerns[0] # (cond, conf, label, bucket, is_low)
+        overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
+        st.info(overall_text, icon="📌")
+        r_txt.append(f"\n{t['overall_label']} {top_issue[0]} ({top_issue[2]})")
+
+        st.subheader(t["suggestions"])
+        
         for c, conf, lbl, bkt, _ in concerns:
-            tips = friendly_tips(c, bkt, lang)
-            is_serious = (bkt == "Severe/High") or (c == "Depression" and answers[25] >= 2)
-            style = "suggestion-serious" if is_serious else "suggestion-friendly"
+            tips = get_suggestions(c, bkt, lang)
+            is_severe = (bkt == "Severe/High") or (c == "Depression" and answers[25] >= 2)
+            style = "suggestion-severe" if is_severe else "suggestion-box"
             
-            st.markdown(f"##### 👉 **{c}**")
+            st.markdown(f"**{c} ({lbl})**")
             st.markdown(f"<div class='{style}'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
             
-            r_txt.append(f"\n[{c} Tips]")
-            r_txt.extend([f"- {re.sub(r'[*]', '', tip)}" for tip in tips])
+            r_txt.append(f"\n[{c} Suggestions]")
+            r_txt.extend([f"- {tip}" for tip in tips])
 
     st.markdown("---")
     st.download_button(
