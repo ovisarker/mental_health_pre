@@ -5,7 +5,6 @@ import joblib
 import re
 import warnings
 from datetime import datetime
-import plotly.express as px
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
