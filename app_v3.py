@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Professional Cards
+# Custom CSS for Professional UI
 st.markdown("""
 <style>
     div[data-testid="metric-container"] {
@@ -169,54 +169,50 @@ def extract_number(text):
     except:
         return 0.0
 
-# --- PROFESSIONAL MEDICAL SUGGESTIONS (Based on WHO/CBT Guidelines) ---
+# --- PROFESSIONAL MEDICAL SUGGESTIONS ---
 def get_professional_suggestions(condition, severity, lang):
-    # Base logic: Mild (Self-care), Moderate (Management), Severe (Professional Help)
-    
     suggestions_en = {
         "Anxiety": {
             "Mild": ["**Self-Care:** Practice 'Box Breathing' (4-4-4-4 technique) twice daily.", "**Lifestyle:** Reduce caffeine intake after 2 PM.", "**Mindfulness:** Spend 10 mins in nature."],
-            "Moderate": ["**Management:** Start a 'Worry Journal' - write down worries and close the book.", "**Physical:** Engage in 20 mins of aerobic exercise daily.", "**Sleep:** Maintain strict sleep hygiene (no screens 1 hour before bed)."],
-            "Severe/High": ["**Urgent Action:** Please consult a university counselor or psychologist.", "**Immediate Coping:** Use the 5-4-3-2-1 Grounding Technique immediately if feeling overwhelmed.", "**Support:** Reach out to a trusted friend or family member today."]
+            "Moderate": ["**Management:** Start a 'Worry Journal' - write down worries and close the book.", "**Physical:** Engage in 20 mins of aerobic exercise daily.", "**Sleep:** Maintain strict sleep hygiene."],
+            "Severe/High": ["**Urgent Action:** Please consult a university counselor or psychologist.", "**Immediate Coping:** Use the 5-4-3-2-1 Grounding Technique immediately.", "**Support:** Reach out to a trusted friend."]
         },
         "Stress": {
-            "Mild": ["**Organization:** Use the Eisenhower Matrix to prioritize tasks.", "**Break:** Take a 5-minute break for every 25 minutes of study (Pomodoro).", "**Social:** Talk to a friend about non-academic topics."],
-            "Moderate": ["**Relaxation:** Practice Progressive Muscle Relaxation (PMR) before sleep.", "**Balance:** Ensure you are not skipping meals or sleep for study.", "**Activity:** Light yoga or stretching can reduce cortisol."],
-            "Severe/High": ["**Intervention:** Academic load may be unmanageable; speak to your advisor.", "**Health:** High stress affects immunity; prioritize rest immediately.", "**Professional:** Consider stress management counseling."]
+            "Mild": ["**Organization:** Use the Eisenhower Matrix to prioritize tasks.", "**Break:** Take a 5-minute break for every 25 minutes of study.", "**Social:** Talk to a friend about non-academic topics."],
+            "Moderate": ["**Relaxation:** Practice Progressive Muscle Relaxation (PMR) before sleep.", "**Balance:** Ensure you are not skipping meals or sleep.", "**Activity:** Light yoga or stretching."],
+            "Severe/High": ["**Intervention:** Academic load may be unmanageable; speak to your advisor.", "**Health:** High stress affects immunity; prioritize rest.", "**Professional:** Consider stress management counseling."]
         },
         "Depression": {
-            "Mild": ["**Routine:** Stick to a small, manageable daily routine (e.g., make your bed).", "**Sunlight:** Get 15-20 minutes of morning sunlight.", "**Connection:** Send a message to one friend today."],
-            "Moderate": ["**Activity:** Behavioral Activation - do one thing you used to enjoy, even if you don't feel like it.", "**Diet:** Focus on Omega-3 rich foods (fish, nuts).", "**Sleep:** Avoid daytime napping to improve night sleep."],
-            "Severe/High": ["**Critical:** Please contact a mental health professional or the helpline provided.", "**Safety:** If you have thoughts of self-harm, call the emergency number immediately.", "**Support:** Do not isolate yourself; be around people you trust."]
+            "Mild": ["**Routine:** Stick to a small, manageable daily routine.", "**Sunlight:** Get 15-20 minutes of morning sunlight.", "**Connection:** Send a message to one friend today."],
+            "Moderate": ["**Activity:** Behavioral Activation - do one thing you used to enjoy.", "**Diet:** Focus on Omega-3 rich foods.", "**Sleep:** Avoid daytime napping."],
+            "Severe/High": ["**Critical:** Please contact a mental health professional or the helpline.", "**Safety:** If you have thoughts of self-harm, call the emergency number.", "**Support:** Do not isolate yourself."]
         }
     }
 
     suggestions_bn = {
         "Anxiety": {
             "Mild": ["**যত্ন:** দিনে দুবার 'বক্স ব্রিদিং' (৪-৪-৪-৪ টেকনিক) অনুশীলন করুন।", "**জীবনধারা:** দুপুর ২টার পর চা/কফি খাওয়া কমিয়ে দিন।", "**মনোযোগ:** প্রকৃতির মাঝে ১০ মিনিট সময় কাটান।"],
-            "Moderate": ["**ব্যবস্থাপনা:** 'দুশ্চিন্তার ডায়েরি' লিখুন - চিন্তাগুলো লিখে খাতা বন্ধ করে রাখুন।", "**ব্যায়াম:** প্রতিদিন ২০ মিনিট অ্যারোবিক ব্যায়াম করুন।", "**ঘুম:** ঘুমানোর ১ ঘণ্টা আগে মোবাইল ব্যবহার বন্ধ রাখুন।"],
-            "Severe/High": ["**জরুরি:** দয়া করে বিশ্ববিদ্যালয়ের কাউন্সিলর বা সাইকোলজিস্টের পরামর্শ নিন।", "**তাৎক্ষণিক:** খুব অস্থির লাগলে ৫-৪-৩-২-১ গ্রাউন্ডিং টেকনিক ব্যবহার করুন।", "**সমর্থন:** আজই কোনো বিশ্বস্ত বন্ধু বা পরিবারের সদস্যের সাথে কথা বলুন।"]
+            "Moderate": ["**ব্যবস্থাপনা:** 'দুশ্চিন্তার ডায়েরি' লিখুন।", "**ব্যায়াম:** প্রতিদিন ২০ মিনিট অ্যারোবিক ব্যায়াম করুন।", "**ঘুম:** ঘুমানোর ১ ঘণ্টা আগে মোবাইল ব্যবহার বন্ধ রাখুন।"],
+            "Severe/High": ["**জরুরি:** দয়া করে বিশ্ববিদ্যালয়ের কাউন্সিলর বা সাইকোলজিস্টের পরামর্শ নিন।", "**তাৎক্ষণিক:** খুব অস্থির লাগলে ৫-৪-৩-২-১ টেকনিক ব্যবহার করুন।", "**সমর্থন:** আজই কোনো বিশ্বস্ত বন্ধুর সাথে কথা বলুন।"]
         },
         "Stress": {
-            "Mild": ["**অর্গানাইজেশন:** কাজের গুরুত্ব অনুযায়ী তালিকা (To-Do List) তৈরি করুন।", "**বিরতি:** প্রতি ২৫ মিনিট পড়ার পর ৫ মিনিট বিরতি নিন (পমোডোরো)।", "**সামাজিক:** বন্ধুর সাথে পড়াশোনার বাইরের বিষয় নিয়ে কথা বলুন।"],
-            "Moderate": ["**শিথিলকরণ:** ঘুমানোর আগে পেশী শিথিলকরণ (PMR) ব্যায়াম করুন।", "**ভারসাম্য:** পড়ার জন্য খাওয়া বা ঘুম বাদ দিবেন না।", "**ব্যায়াম:** হালকা যোগব্যায়াম বা স্ট্রেচিং স্ট্রেস কমাতে সাহায্য করে।"],
+            "Mild": ["**অর্গানাইজেশন:** কাজের গুরুত্ব অনুযায়ী তালিকা (To-Do List) তৈরি করুন।", "**বিরতি:** প্রতি ২৫ মিনিট পড়ার পর ৫ মিনিট বিরতি নিন।", "**সামাজিক:** বন্ধুর সাথে পড়াশোনার বাইরের বিষয় নিয়ে কথা বলুন।"],
+            "Moderate": ["**শিথিলকরণ:** ঘুমানোর আগে পেশী শিথিলকরণ (PMR) ব্যায়াম করুন।", "**ভারসাম্য:** পড়ার জন্য খাওয়া বা ঘুম বাদ দিবেন না।", "**ব্যায়াম:** হালকা যোগব্যায়াম স্ট্রেস কমাতে সাহায্য করে।"],
             "Severe/High": ["**হস্তক্ষেপ:** পড়ার চাপ অসহনীয় হলে অ্যাডভাইজারের সাথে কথা বলুন।", "**স্বাস্থ্য:** অতিরিক্ত স্ট্রেস রোগ প্রতিরোধ ক্ষমতা কমায়; বিশ্রামে অগ্রাধিকার দিন।", "**পেশাদার:** স্ট্রেস ম্যানেজমেন্ট কাউন্সিলিংয়ের কথা বিবেচনা করুন।"]
         },
         "Depression": {
-            "Mild": ["**রুটিন:** প্রতিদিন ছোট ছোট কাজ করার অভ্যাস করুন (যেমন: বিছানা গোছানো)।", "**রোদ:** সকালে ১৫-২০ মিনিট গায়ে রোদ লাগান।", "**যোগাযোগ:** আজ অন্তত একজন বন্ধুকে মেসেজ বা কল করুন।"],
-            "Moderate": ["**সক্রিয়তা:** ভালো না লাগলেও পছন্দের কোনো একটি কাজ করার চেষ্টা করুন।", "**খাবার:** ওমেগা-৩ সমৃদ্ধ খাবার (মাছ, বাদাম) খাওয়ার চেষ্টা করুন।", "**ঘুম:** রাতে ভালো ঘুমের জন্য দিনের বেলা ঘুমানো এড়িয়ে চলুন।"],
-            "Severe/High": ["**গুরুত্বপূর্ণ:** দয়া করে মানসিক স্বাস্থ্য বিশেষজ্ঞ বা হেল্পলাইনে যোগাযোগ করুন।", "**নিরাপত্তা:** যদি নিজেকে আঘাত করার চিন্তা আসে, তবে অবিলম্বে জরুরি নম্বরে কল করুন।", "**সমর্থন:** একা থাকবেন না; বিশ্বাসভাজন কারো সাথে সময় কাটান।"]
+            "Mild": ["**রুটিন:** প্রতিদিন ছোট ছোট কাজ করার অভ্যাস করুন।", "**রোদ:** সকালে ১৫-২০ মিনিট গায়ে রোদ লাগান।", "**যোগাযোগ:** আজ অন্তত একজন বন্ধুকে মেসেজ বা কল করুন।"],
+            "Moderate": ["**সক্রিয়তা:** ভালো না লাগলেও পছন্দের কাজ করার চেষ্টা করুন।", "**খাবার:** ওমেগা-৩ সমৃদ্ধ খাবার (মাছ, বাদাম) খাওয়ার চেষ্টা করুন।", "**ঘুম:** রাতে ভালো ঘুমের জন্য দিনের বেলা ঘুমানো এড়িয়ে চলুন।"],
+            "Severe/High": ["**গুরুত্বপূর্ণ:** দয়া করে মানসিক স্বাস্থ্য বিশেষজ্ঞ বা হেল্পলাইনে যোগাযোগ করুন।", "**নিরাপত্তা:** যদি নিজেকে আঘাত করার চিন্তা আসে, তবে জরুরি নম্বরে কল করুন।", "**সমর্থন:** একা থাকবেন না; বিশ্বাসভাজন কারো সাথে সময় কাটান।"]
         }
     }
 
     dataset = suggestions_bn if lang == 'Bangla' else suggestions_en
     
-    # Logic to pick severity level from suggestion dict
-    # We map label text to Mild/Moderate/Severe keys
     level_key = "Mild"
     if "Moderate" in severity: level_key = "Moderate"
     elif "Severe" in severity or "High" in severity: level_key = "Severe/High"
-    elif "Minimal" in severity or "Low" in severity: level_key = "Mild" # Treat minimal as mild for positive suggestions
+    elif "Minimal" in severity or "Low" in severity: level_key = "Mild" 
 
     return dataset.get(condition, {}).get(level_key, dataset[condition]["Mild"])
 
@@ -336,7 +332,7 @@ if analyze_btn:
             with st.spinner(t['analyzing']):
                 probs = model.predict_proba(input_df)
             
-            # --- Q26 SAFETY ALERT ---
+            # --- GLOBAL SAFETY ALERT (Top) ---
             if final_answers[25] >= 2:
                 st.markdown(f"""
                 <div class="emergency-box">
@@ -382,12 +378,19 @@ if analyze_btn:
                 report_text += f"{cond}: {label} (Confidence: {confidence:.1f}%)\n"
                 
                 with result_cols[i]:
-                    # Determine card color based on severity
+                    st.markdown(f"#### {cond}")
                     if is_healthy:
                         st.success(f"**{display_label}**")
                         st.progress(0)
                         healthy_count += 1
                         risk_scores.append((cond, 0, label))
+                        
+                        # --- MODIFICATION: Clinical Note inside Depression Card ---
+                        # Logic: If Healthy/Low Risk BUT Self-harm (Index 25) is High
+                        if cond == 'Depression' and final_answers[25] >= 2:
+                            warn_text = "⚠️ **Clinical Note:** Self-harm risk detected despite low overall score." if lang == 'English' else "⚠️ **ক্লিনিক্যাল নোট:** সামগ্রিক স্কোর কম হলেও আত্মহানির ঝুঁকি লক্ষ্য করা যাচ্ছে।"
+                            st.warning(warn_text)
+
                     else:
                         st.error(f"**{display_label}**")
                         st.progress(int(confidence))
@@ -396,7 +399,7 @@ if analyze_btn:
 
             st.markdown("---")
             
-            # --- PROFESSIONAL RECOMMENDATIONS (No Chart) ---
+            # --- PROFESSIONAL RECOMMENDATIONS ---
             st.subheader(t['suggestions'])
             
             if healthy_count == 3:
@@ -404,14 +407,11 @@ if analyze_btn:
                 st.markdown(t['healthy_msg'])
                 report_text += "\nRecommendation: Maintain current healthy lifestyle."
             else:
-                # Sort by risk confidence to show highest priority first
                 risk_scores.sort(key=lambda x: x[1], reverse=True)
                 
                 for cond, conf, severity_label in risk_scores:
-                    if conf > 0: # Only show for unhealthy conditions
-                        # Dynamic box color based on severity
+                    if conf > 0: 
                         box_class = "suggestion-warning" if "Severe" in severity_label else "suggestion-box"
-                        
                         st.markdown(f"##### 👉 **{cond} ({severity_label})**")
                         suggestions = get_professional_suggestions(cond, severity_label, lang)
                         for tip in suggestions:
