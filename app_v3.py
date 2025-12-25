@@ -31,15 +31,17 @@ st.markdown("""
     .emergency-box {
         background-color: #ffebee; border: 2px solid #ef5350; padding: 15px; border-radius: 8px; color: #c62828; margin-bottom: 20px;
     }
-    .suggestion-box {
-        background-color: #f1f8e9; padding: 15px; border-radius: 8px; border-left: 5px solid #8bc34a; margin-top: 10px;
+    /* Friendly Suggestion Styling */
+    .suggestion-friendly {
+        background-color: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 5px solid #2196f3; margin-top: 10px; color: #0d47a1;
     }
-    .suggestion-warning {
-        background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 5px solid #ff9800; margin-top: 10px;
+    .suggestion-serious {
+        background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 5px solid #ff9800; margin-top: 10px; color: #e65100;
     }
-    /* Step Progress Bar */
-    .step-indicator {
-        font-size: 18px; font-weight: bold; color: #2196F3; margin-bottom: 20px;
+    /* Blur effect for locked state */
+    .locked-content {
+        filter: blur(5px);
+        pointer-events: none;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -49,31 +51,30 @@ translations = {
     'English': {
         'title': "Student Mental Health Assessment",
         'subtitle': "Machine Learning Based Screening System",
-        'step1': "Step 1: Student Profile",
-        'step2': "Step 2: Behavioral Assessment",
-        'next_btn': "Next: Go to Questionnaire 👉",
-        'back_btn': "👈 Back to Profile",
-        'profile_err': "⚠️ Please fill in all profile fields correctly (e.g., Department cannot be empty).",
-        'age': "Age Group",
-        'gender': "Gender",
-        'uni': "University Type",
-        'dept': "Department Name (e.g., CSE)",
-        'year': "Academic Year",
-        'cgpa': "Current CGPA",
-        'scholarship': "Scholarship/Waiver?",
+        'reset_btn': "🔄 Reset System",
+        'sidebar_title': "📝 Student Profile (Required)",
+        'name': "Student Name",
+        'age': "1. Age Group",
+        'gender': "2. Gender",
+        'uni': "3. University Type",
+        'dept': "4. Department",
+        'year': "5. Academic Year",
+        'cgpa': "6. Current CGPA",
+        'scholarship': "7. Scholarship/Waiver?",
         'helpline_title': "🆘 Emergency Helpline (BD)",
-        'instructions': "💡 **Instructions:** Please indicate how frequently you have experienced these feelings **over the last 2 weeks**.",
-        'scale_caption': "Scale: **Not at all** (0) → **Sometimes** (1) → **Often** (2) → **Very Often** (3)",
-        'analyze_btn': "🚀 Analyze Risk Level",
+        'section_title': "📋 Behavioral Assessment",
+        'instructions': "💡 **Instructions:** Select the option that best describes your feelings **over the last 2 weeks**.",
+        'analyze_btn': "🚀 Analyze My Mental Health",
         'analyzing': "Analyzing behavioral patterns...",
         'success': "✅ Assessment Complete",
-        'result_title': "📊 Clinical Risk Assessment",
-        'suggestions': "💡 Professional Recommendations",
-        'healthy_msg': "🎉 **Status: Mentally Resilient**\nYour responses indicate a stable mental state.",
-        'download_btn': "📥 Download Assessment Report",
-        'disclaimer_short': "⚠️ **Disclaimer:** This tool uses ML algorithms for screening. It is not a substitute for clinical diagnosis.",
+        'result_title': "📊 Your Wellness Report",
+        'suggestions': "💡 Friendly Suggestions",
+        'healthy_msg': "🎉 **You are doing great!**\nYour responses show you are mentally strong right now. Keep enjoying your life!",
+        'download_btn': "📥 Download Report",
+        'disclaimer_short': "⚠️ **Note:** This is an ML-based tool for screening, not a doctor replacement.",
         'dev_by': "Developed by",
-        'slider_opts': ["Not at all", "Sometimes", "Often", "Very Often"],
+        'fill_profile_msg': "🚫 **Action Required:** Please fill up the **Student Profile** on the left sidebar completely to unlock the questions.",
+        'radio_opts': ["Not at all", "Sometimes", "Often", "Very Often"],
         'genders': ['Male', 'Female'],
         'unis': ['Public', 'Private'],
         'scholars': ['Yes', 'No'],
@@ -83,31 +84,30 @@ translations = {
     'Bangla': {
         'title': "শিক্ষার্থী মানসিক স্বাস্থ্য মূল্যায়ন",
         'subtitle': "মেশিন লার্নিং ভিত্তিক স্ক্রিনিং সিস্টেম",
-        'step1': "ধাপ ১: শিক্ষার্থীর প্রোফাইল",
-        'step2': "ধাপ ২: আচরণগত মূল্যায়ন",
-        'next_btn': "পরবর্তী: প্রশ্নাবলী শুরু করুন 👉",
-        'back_btn': "👈 প্রোফাইলে ফিরে যান",
-        'profile_err': "⚠️ দয়া করে প্রোফাইলের সব তথ্য সঠিক ভাবে পূরণ করুন (ডিপার্টমেন্ট খালি রাখা যাবে না)।",
-        'age': "বয়স গ্রুপ",
-        'gender': "লিঙ্গ",
-        'uni': "বিশ্ববিদ্যালয়ের ধরণ",
-        'dept': "ডিপার্টমেন্টের নাম (যেমন: CSE)",
-        'year': "শিক্ষাবর্ষ",
-        'cgpa': "বর্তমান সিজিপিএ (CGPA)",
-        'scholarship': "স্কলারশিপ/ওয়েভার আছে?",
+        'reset_btn': "🔄 রিসেট করুন",
+        'sidebar_title': "📝 প্রোফাইল (অবশ্যই পূরণীয়)",
+        'name': "শিক্ষার্থীর নাম",
+        'age': "১. বয়স গ্রুপ",
+        'gender': "২. লিঙ্গ",
+        'uni': "৩. বিশ্ববিদ্যালয়ের ধরণ",
+        'dept': "৪. ডিপার্টমেন্ট",
+        'year': "৫. শিক্ষাবর্ষ",
+        'cgpa': "৬. বর্তমান সিজিপিএ (CGPA)",
+        'scholarship': "৭. স্কলারশিপ/ওয়েভার আছে?",
         'helpline_title': "🆘 জরুরি হেল্পলাইন (BD)",
-        'instructions': "💡 **নির্দেশনা:** গত **২ সপ্তাহে** আপনি এই অনুভূতিগুলো কতবার অনুভব করেছেন তা জানান।",
-        'scale_caption': "স্কেল: **একদম না** (০) → **মাঝে মাঝে** (১) → **প্রায়ই** (২) → **খুব বেশি** (৩)",
-        'analyze_btn': "🚀 ঝুঁকি বিশ্লেষণ করুন",
-        'analyzing': "মেশিন লার্নিং মডেল বিশ্লেষণ করছে...",
-        'success': "✅ মূল্যায়ন সম্পন্ন হয়েছে",
-        'result_title': "📊 ক্লিনিক্যাল ঝুঁকি মূল্যায়ন",
-        'suggestions': "💡 পেশাদার পরামর্শ",
-        'healthy_msg': "🎉 **অবস্থা: মানসিকভাবে স্থিতিশীল**\nআপনার মানসিক অবস্থা ভারসাম্যপূর্ণ।",
-        'download_btn': "📥 রিপোর্ট ডাউনলোড করুন",
-        'disclaimer_short': "⚠️ **সতর্কতা:** এটি একটি স্ক্রিনিং টুল। এটি পেশাদার ক্লিনিক্যাল ডায়াগনসিসের বিকল্প নয়।",
+        'section_title': "📋 আচরণগত মূল্যায়ন",
+        'instructions': "💡 **নির্দেশনা:** গত **২ সপ্তাহে** আপনার অনুভূতির সাথে যে অপশনটি মিলে, সেটি সিলেক্ট করুন।",
+        'analyze_btn': "🚀 ফলাফল দেখুন",
+        'analyzing': "বিশ্লেষণ করা হচ্ছে...",
+        'success': "✅ মূল্যায়ন সম্পন্ন",
+        'result_title': "📊 আপনার ওয়েলনেস রিপোর্ট",
+        'suggestions': "💡 বন্ধুত্বপূর্ণ পরামর্শ",
+        'healthy_msg': "🎉 **আপনি দারুণ আছেন!**\nআপনার মানসিক অবস্থা বেশ ভালো। জীবন উপভোগ করতে থাকুন!",
+        'download_btn': "📥 রিপোর্ট ডাউনলোড",
+        'disclaimer_short': "⚠️ **নোট:** এটি একটি স্ক্রিনিং টুল, ডাক্তারের বিকল্প নয়।",
         'dev_by': "ডেভেলপ করেছে",
-        'slider_opts': ["একদম না", "মাঝে মাঝে", "প্রায়ই", "খুব বেশি"],
+        'fill_profile_msg': "🚫 **অ্যাকশন প্রয়োজন:** প্রশ্নগুলো দেখার জন্য দয়া করে বাম পাশের **শিক্ষার্থীর প্রোফাইল** সম্পূর্ণ পূরণ করুন।",
+        'radio_opts': ["একদম না", "মাঝে মাঝে", "প্রায়ই", "খুব বেশি"],
         'genders': ['পুরুষ', 'মহিলা'],
         'unis': ['পাবলিক', 'প্রাইভেট'],
         'scholars': ['হ্যাঁ', 'না'],
@@ -141,12 +141,15 @@ q_labels_bn = [
     "২৫. খুব ধীর বা দ্রুত নড়াচড়া করছেন?", "২৬. নিজেকে আঘাত করার চিন্তা আসছে?"
 ]
 
-# --- SESSION STATE & RESOURCES ---
-if 'step' not in st.session_state:
-    st.session_state.step = 1
-if 'profile_data' not in st.session_state:
-    st.session_state.profile_data = {}
+# --- RESET LOGIC ---
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
 
+def reset_app():
+    st.session_state.reset = True
+    st.rerun()
+
+# --- LOAD RESOURCES ---
 @st.cache_resource
 def load_resources():
     try:
@@ -163,218 +166,314 @@ if model is None:
     st.error("🚨 Model files missing! Please upload .pkl files to GitHub.")
     st.stop()
 
-# Helper Functions
 def extract_number(text):
     try:
         if pd.isna(text): return 0.0
         text_str = str(text)
-        if '-' in text_str:
-            return float(text_str.split('-')[0].strip())
+        if '-' in text_str: return float(text_str.split('-')[0].strip())
         match = re.search(r"[-+]?\d*\.\d+|\d+", text_str)
         return float(match.group()) if match else 0.0
-    except:
-        return 0.0
+    except: return 0.0
 
-def is_low_risk_label(label):
-    low_set = {"Minimal Anxiety", "Low Stress", "No Depression", "Minimal Depression", "Normal", "None"}
-    return label in low_set or any(x in label for x in ["Minimal", "Low", "No Depression"])
+# --- FRIENDLY vs SERIOUS SUGGESTIONS ---
+def get_casual_suggestions(condition, severity, lang):
+    # Friendly Tone for Mild/Moderate, Serious for Severe
+    
+    suggestions_en = {
+        "Anxiety": {
+            "Mild": ["👋 **Hey!** Just take a deep breath. Listen to your favorite song.", "☕ **Chill:** Skip that extra cup of coffee today.", "🌿 **Nature:** Go out, look at the sky for 5 mins."],
+            "Moderate": ["📓 **Write it out:** Got worries? Write them down and tear the paper.", "🏃 **Move:** Do a quick 10-min dance or walk.", "📵 **Disconnect:** Stay away from phone before sleep."],
+            "Severe/High": ["🩺 **Doctor's Advice:** It seems heavy. Please see a university counselor.", "🆘 **Help:** Don't fight this alone. Talk to a professional.", "💊 **Health:** Your mental peace is priority. Seek help."]
+        },
+        "Stress": {
+            "Mild": ["🎬 **Movie Time:** Watch something funny today.", "📅 **One thing:** Just do one small task, don't overthink.", "🍕 **Treat:** Eat something you love!"],
+            "Moderate": ["🧘 **Relax:** Try stretching or yoga.", "🚫 **Say No:** Don't take extra pressure.", "🗣️ **Share:** Rant to a friend, it helps."],
+            "Severe/High": ["🩺 **Professional Help:** You might be burning out. Talk to an advisor.", "🛑 **Stop:** Take a break before you crash.", "🆘 **Support:** High stress hurts health. Consult a doctor."]
+        },
+        "Depression": {
+            "Mild": ["👋 **Friend:** Call your best friend today.", "🌞 **Sun:** Go stand in the sun for 10 mins.", "🧹 **Tidy:** Just clean your desk, it feels good."],
+            "Moderate": ["🎨 **Hobby:** Do something you used to love (drawing/gaming).", "🥗 **Food:** Eat a good meal.", "🚶 **Walk:** Just a short walk outside."],
+            "Severe/High": ["🩺 **Urgent:** Please visit a psychologist or counselor.", "🆘 **Helpline:** If you feel unsafe, call the helpline below.", "🤝 **Family:** Tell your family how you feel."]
+        }
+    }
 
-def get_professional_suggestions(condition, severity, lang):
-    # (Keeping suggestion logic brief for length - reusing previous logic)
-    # Using simple fallback for demonstration, assumes full logic exists in your version
-    return [f"Please consult a professional for {condition} ({severity})."]
+    suggestions_bn = {
+        "Anxiety": {
+            "Mild": ["👋 **হেই!** লম্বা শ্বাস নাও। পছন্দের গানটা শোনো।", "☕ **চিল:** আজকে আর কফি খেও না।", "🌿 **প্রকৃতি:** বাইরে গিয়ে ৫ মিনিট আকাশ দেখো।"],
+            "Moderate": ["📓 **লিখে ফেলো:** দুশ্চিন্তা হচ্ছে? লিখে কাগজটা ছিঁড়ে ফেলো।", "🏃 **নড়াচড়া:** ১০ মিনিট একটু হাঁটো বা নাচো।", "📵 **ফোন দূরে:** ঘুমানোর আগে ফোন টিপবে না।"],
+            "Severe/High": ["🩺 **পরামর্শ:** এটা একটু বেশি মনে হচ্ছে। দয়া করে কাউন্সিলর দেখাও।", "🆘 **সাহায্য:** একা কষ্ট পেও না। ডাক্তার বা প্রফেশনালের সাথে কথা বলো।", "💊 **স্বাস্থ্য:** তোমার শান্তি সবার আগে। সাহায্য নাও।"]
+        },
+        "Stress": {
+            "Mild": ["🎬 **মুভি টাইম:** আজকে মজার কিছু দেখো।", "📅 **ছোট কাজ:** বেশি ভেবো না, ছোট একটা কাজ শেষ করো।", "🍕 **খাবার:** পছন্দের খাবার খাও!"],
+            "Moderate": ["🧘 **রিলাক্স:** একটু স্ট্রেচিং বা ইয়োগা করো।", "🚫 **না বলো:** অতিরিক্ত প্রেশার নিও না।", "🗣️ **কথা বলো:** বন্ধুর সাথে মন খুলে কথা বলো।"],
+            "Severe/High": ["🩺 **পেশাদার সাহায্য:** তুমি বার্ন-আউট হয়ে যাচ্ছো। অ্যাডভাইজারের সাথে কথা বলো।", "🛑 **থামো:** শরীর খারাপ হওয়ার আগেই ব্রেক নাও।", "🆘 **সাপোর্ট:** অতিরিক্ত স্ট্রেস ক্ষতিকর। ডাক্তার দেখাও।"]
+        },
+        "Depression": {
+            "Mild": ["👋 **বন্ধু:** বেস্ট ফ্রেন্ডকে একটা কল দাও।", "🌞 **রোদ:** সকালে ১০ মিনিট রোদে দাঁড়িয়ে থাকো।", "🧹 **গোছানো:** পড়ার টেবিলটা একটু গুছিয়ে নাও, ভালো লাগবে।"],
+            "Moderate": ["🎨 **শখ:** ছবি আঁকা বা গেম খেলা—যা ভালো লাগে তাই করো।", "🥗 **খাবার:** ঠিকমতো খাওয়া-দাওয়া করো।", "🚶 **হাঁটা:** বিকেলে একটু বাইরে হেঁটে এসো।"],
+            "Severe/High": ["🩺 **জরুরি:** দয়া করে সাইকোলজিস্ট বা কাউন্সিলর দেখাও।", "🆘 **হেল্পলাইন:** যদি খুব খারাপ লাগে, হেল্পলাইনে কল করো।", "🤝 **পরিবার:** পরিবারের কাউকে তোমার অনুভূতির কথা জানাও।"]
+        }
+    }
 
-# --- LANGUAGE SELECTOR (Always Visible) ---
-with st.sidebar:
-    st.markdown("### 🌐 Language / ভাষা")
-    lang = st.radio("", ('English', 'Bangla'), label_visibility="collapsed")
-    t = translations[lang]
-    st.markdown("---")
-    with st.expander(t['helpline_title'], expanded=True):
-        st.markdown("📞 **Kaan Pete Roi:** 01779554391\n📞 **Moner Bondhu:** 01779632588\n🚑 **999**")
+    dataset = suggestions_bn if lang == 'Bangla' else suggestions_en
+    level_key = "Mild"
+    if "Moderate" in severity: level_key = "Moderate"
+    elif "Severe" in severity or "High" in severity: level_key = "Severe/High"
+    
+    return dataset.get(condition, {}).get(level_key, dataset[condition]["Mild"])
+
+# --- LANGUAGE SELECTOR ---
+st.sidebar.markdown("### 🌐 Language / ভাষা")
+lang = st.sidebar.radio("", ('English', 'Bangla'), label_visibility="collapsed")
+t = translations[lang]
 
 # --- HEADER ---
 col1, col2 = st.columns([8, 2])
 with col1:
     st.title(t['title'])
     st.markdown(f"##### {t['subtitle']}")
+with col2:
+    if st.button(t['reset_btn'], type="primary"):
+        reset_app()
 
 st.markdown("---")
 
-# =========================================================
-# STEP 1: STUDENT PROFILE (MANDATORY)
-# =========================================================
-if st.session_state.step == 1:
-    st.markdown(f"<div class='step-indicator'>{t['step1']}</div>", unsafe_allow_html=True)
+# --- SIDEBAR PROFILE (STRICT MODE) ---
+st.sidebar.header(t['sidebar_title'])
+
+# 1. Name Input (NEW & REQUIRED)
+student_name = st.sidebar.text_input(t['name'], placeholder="Enter full name")
+
+# 2. Dynamic Inputs (Forced Selection via Index=None)
+# We use index=None to force user to pick one. If not picked, it stays None.
+
+age_display = ['18-22', '23-26', '27-30', 'Above 30']
+age_input = st.sidebar.selectbox(t['age'], age_display, index=None, placeholder="Select Age")
+
+gender_input = st.sidebar.selectbox(t['gender'], t['genders'], index=None, placeholder="Select Gender")
+
+uni_input = st.sidebar.selectbox(t['uni'], t['unis'], index=None, placeholder="Select Type")
+
+dept_input = st.sidebar.selectbox(t['dept'], t['depts'], index=None, placeholder="Select Dept")
+
+year_input = st.sidebar.selectbox(t['year'], t['years'], index=None, placeholder="Select Year")
+
+cgpa_input = st.sidebar.number_input(t['cgpa'], min_value=0.00, max_value=4.00, value=0.00, step=0.01, format="%.2f")
+
+sch_input = st.sidebar.selectbox(t['scholarship'], t['scholars'], index=None, placeholder="Select Option")
+
+st.sidebar.markdown("---")
+
+# Helpline
+with st.sidebar.expander(t['helpline_title'], expanded=True):
+    st.markdown("""
+    📞 **Kaan Pete Roi:** 01779554391  
+    📞 **Moner Bondhu:** 01779632588  
+    🚑 **National Emergency:** 999
+    """)
+
+# --- STRICT VALIDATION LOGIC ---
+# Check if all fields are filled
+is_profile_complete = all([
+    student_name, 
+    age_input, 
+    gender_input, 
+    uni_input, 
+    dept_input, 
+    year_input, 
+    sch_input,
+    cgpa_input > 0.0  # Ensure CGPA is entered
+])
+
+if not is_profile_complete:
+    st.warning(t['fill_profile_msg'])
+    st.info("👈 Please check the sidebar.")
+    st.stop() # Stops execution here until profile is filled
+
+# --- MAPPING FOR MODEL (After Validation) ---
+gender_model = 'Male' if gender_input in ['Male', 'পুরুষ'] else 'Female'
+uni_model = 'Public' if uni_input in ['Public', 'পাবলিক'] else 'Private'
+sch_model = 'Yes' if sch_input in ['Yes', 'হ্যাঁ'] else 'No'
+
+# Dept Map
+dept_map = {"সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"}
+dept_model = dept_map.get(dept_input, dept_input)
+
+# Year Map
+year_map = {'১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second Year', '৩য় বর্ষ': 'Third Year', '৪র্থ বর্ষ': 'Fourth Year', 'মাস্টার্স': 'Master'}
+year_model = year_map.get(year_input, year_input)
+
+# --- QUESTIONNAIRE (RADIO BUTTONS) ---
+st.subheader(f"👋 Hello, {student_name}")
+st.subheader(t['section_title'])
+st.info(t['instructions'])
+
+radio_options = t['radio_opts']
+# Standardized Mapping
+options_map = {
+    "Not at all": 0, "একদম না": 0,
+    "Sometimes": 1, "মাঝে মাঝে": 1,
+    "Often": 2, "প্রায়ই": 2,
+    "Very Often": 3, "খুব বেশি": 3
+}
+
+q_labels = q_labels_bn if lang == 'Bangla' else q_labels_en
+answers_map = {}
+q_col1, q_col2 = st.columns(2)
+
+for i, q_text in enumerate(q_labels):
+    current_col = q_col1 if i % 2 == 0 else q_col2
+    with current_col:
+        # RADIO BUTTON (Horizontal)
+        key_name = f"q_{i}_{st.session_state.reset}_{lang}"
+        val = st.radio(label=f"**{q_text}**", options=radio_options, horizontal=True, key=key_name)
+        answers_map[i] = options_map[val]
+        st.write("---") # Separator line
+
+final_answers = [answers_map[i] for i in range(26)]
+
+if st.session_state.reset:
+    st.session_state.reset = False
+
+# --- PREDICTION ---
+col_cen1, col_cen2, col_cen3 = st.columns([1, 2, 1])
+with col_cen2:
+    analyze_btn = st.button(t['analyze_btn'], type="primary", use_container_width=True)
+
+if analyze_btn:
+    age_numeric = extract_number(age_input)
+    cgpa_numeric = float(cgpa_input)
     
-    with st.form("profile_form"):
-        c1, c2 = st.columns(2)
+    input_dict = {}
+    if len(feature_columns) == 33:
+        input_dict[feature_columns[0]] = age_numeric
+        input_dict[feature_columns[1]] = gender_model
+        input_dict[feature_columns[2]] = uni_model
+        input_dict[feature_columns[3]] = dept_model
+        input_dict[feature_columns[4]] = year_model
+        input_dict[feature_columns[5]] = cgpa_numeric
+        input_dict[feature_columns[6]] = sch_model
+        for i in range(26):
+            input_dict[feature_columns[7+i]] = final_answers[i]
+            
+        input_df = pd.DataFrame([input_dict])
+        input_df = input_df.reindex(columns=feature_columns, fill_value=0)
         
-        with c1:
-            age_display = ['18-22', '23-26', '27-30', 'Above 30']
-            age_input = st.selectbox(t['age'], age_display)
+        try:
+            with st.spinner(t['analyzing']):
+                probs = model.predict_proba(input_df)
             
-            gender_idx = st.selectbox(t['gender'], t['genders'])
+            # --- GLOBAL SAFETY ALERT ---
+            if final_answers[25] >= 2:
+                st.markdown(f"""
+                <div class="emergency-box">
+                    <h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3>
+                    <p>{'Please seek professional help immediately.' if lang=='English' else 'দয়া করে অবিলম্বে পেশাদার সাহায্য নিন।'}</p>
+                </div>
+                """, unsafe_allow_html=True)
             
-            dept_idx = st.selectbox(t['dept'], t['depts']) # Using Selectbox ensures valid input
+            st.success(t['success'])
+            st.subheader(t['result_title'])
             
-            cgpa_input = st.number_input(t['cgpa'], min_value=0.00, max_value=4.00, value=3.50, step=0.01)
-
-        with c2:
-            uni_idx = st.selectbox(t['uni'], t['unis'])
-            year_idx = st.selectbox(t['year'], t['years'])
-            sch_idx = st.selectbox(t['scholarship'], t['scholars'])
+            result_cols = st.columns(3)
+            conditions = ['Anxiety', 'Stress', 'Depression']
+            risk_scores = []
+            healthy_count = 0
             
-        submitted = st.form_submit_button(t['next_btn'], type="primary", use_container_width=True)
-        
-        if submitted:
-            # Map Inputs immediately to English for Model
-            gender_model = 'Male' if gender_idx in ['Male', 'পুরুষ'] else 'Female'
-            uni_model = 'Public' if uni_idx in ['Public', 'পাবলিক'] else 'Private'
-            sch_model = 'Yes' if sch_idx in ['Yes', 'হ্যাঁ'] else 'No'
+            report_text = f"--- WELLNESS REPORT ---\n"
+            report_text += f"Name: {student_name}\n"
+            report_text += f"Date: {datetime.now().strftime('%Y-%m-%d')}\n"
+            report_text += "-----------------------\n\n"
             
-            dept_map = {"সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"}
-            dept_model = dept_map.get(dept_idx, dept_idx)
-            
-            year_map = {'১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second Year', '৩য় বর্ষ': 'Third Year', '৪র্থ বর্ষ': 'Fourth Year', 'মাস্টার্স': 'Master'}
-            year_model = year_map.get(year_idx, year_idx)
-            
-            # Save to session
-            st.session_state.profile_data = {
-                'age': extract_number(age_input),
-                'gender': gender_model,
-                'uni': uni_model,
-                'dept': dept_model,
-                'year': year_model,
-                'cgpa': float(cgpa_input),
-                'scholarship': sch_model,
-                'display_profile': f"{age_input}, {gender_idx}, {dept_idx}" # For report
-            }
-            
-            # Move to Step 2
-            st.session_state.step = 2
-            st.rerun()
-
-# =========================================================
-# STEP 2: QUESTIONNAIRE & ANALYSIS
-# =========================================================
-elif st.session_state.step == 2:
-    # Show tiny profile summary
-    st.info(f"👤 **Profile:** {st.session_state.profile_data['display_profile']}")
-    
-    st.markdown(f"<div class='step-indicator'>{t['step2']}</div>", unsafe_allow_html=True)
-    st.info(t['instructions'])
-    
-    slider_options = t['slider_opts'] 
-    options_map = {
-        "Not at all": 0, "একদম না": 0,
-        "Sometimes": 1, "মাঝে মাঝে": 1,
-        "Often": 2, "প্রায়ই": 2,
-        "Very Often": 3, "খুব বেশি": 3
-    }
-    
-    q_labels = q_labels_bn if lang == 'Bangla' else q_labels_en
-    answers_map = {}
-    
-    # Questionnaire Form
-    q_col1, q_col2 = st.columns(2)
-    
-    for i, q_text in enumerate(q_labels):
-        current_col = q_col1 if i % 2 == 0 else q_col2
-        with current_col:
-            val = st.select_slider(label=f"**{q_text}**", options=slider_options, value=slider_options[0], key=f"q_{i}")
-            answers_map[i] = options_map[val]
-            st.write("") 
-
-    final_answers = [answers_map[i] for i in range(26)]
-
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        if st.button(t['back_btn']):
-            st.session_state.step = 1
-            st.rerun()
-            
-    with c2:
-        analyze_btn = st.button(t['analyze_btn'], type="primary", use_container_width=True)
-
-    if analyze_btn:
-        # Retrieve Profile from Session
-        p = st.session_state.profile_data
-        
-        input_dict = {}
-        if len(feature_columns) == 33:
-            input_dict[feature_columns[0]] = p['age']
-            input_dict[feature_columns[1]] = p['gender']
-            input_dict[feature_columns[2]] = p['uni']
-            input_dict[feature_columns[3]] = p['dept']
-            input_dict[feature_columns[4]] = p['year']
-            input_dict[feature_columns[5]] = p['cgpa']
-            input_dict[feature_columns[6]] = p['scholarship']
-            for i in range(26):
-                input_dict[feature_columns[7+i]] = final_answers[i]
+            for i, cond in enumerate(conditions):
+                prob_arr = probs[i][0]
+                best_idx = np.argmax(prob_arr)
+                label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
+                confidence = prob_arr[best_idx] * 100
                 
-            input_df = pd.DataFrame([input_dict])
-            input_df = input_df.reindex(columns=feature_columns, fill_value=0)
+                # Check low risk
+                low_set = {"Minimal Anxiety", "Low Stress", "No Depression", "Minimal Depression", "Normal", "None"}
+                is_healthy = label in low_set or any(x in label for x in ["Minimal", "Low", "No Depression"])
+                
+                # Translate Display Label
+                display_label = label
+                if lang == 'Bangla':
+                    if is_healthy: display_label = "ঝুঁকি নেই / সুস্থ"
+                    elif "Severe" in label: display_label = "তীব্র ঝুঁকি"
+                    elif "Moderate" in label: display_label = "মাঝারি ঝুঁকি"
+                    elif "Mild" in label: display_label = "মৃদু ঝুঁকি"
+                else:
+                    if is_healthy: display_label = f"No/Low {cond}"
+
+                report_text += f"{cond}: {label}\n"
+                
+                with result_cols[i]:
+                    st.markdown(f"#### {cond}")
+                    if is_healthy:
+                        st.success(f"**{display_label}**")
+                        st.progress(0)
+                        healthy_count += 1
+                        risk_scores.append((cond, 0, label))
+                        
+                        if cond == 'Depression' and final_answers[25] >= 2:
+                             st.warning("⚠️ **Note:** Self-harm risk detected.")
+                    else:
+                        st.error(f"**{display_label}**")
+                        st.progress(int(confidence))
+                        risk_scores.append((cond, confidence, label))
+
+            st.markdown("---")
             
-            try:
-                with st.spinner(t['analyzing']):
-                    probs = model.predict_proba(input_df)
-                
-                # Global Safety Alert (Q26)
-                if final_answers[25] >= 2:
-                    st.markdown(f"""
-                    <div class="emergency-box">
-                        <h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3>
-                        <p>{'Your response indicates distress. Please seek professional help immediately.' if lang=='English' else 'আপনার উত্তর মানসিক যন্ত্রণার ইঙ্গিত দিচ্ছে। দয়া করে অবিলম্বে পেশাদার সাহায্য নিন।'}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                st.success(t['success'])
-                st.subheader(t['result_title'])
-                
-                result_cols = st.columns(3)
-                conditions = ['Anxiety', 'Stress', 'Depression']
-                
-                report_text = f"--- REPORT ---\nDate: {datetime.now()}\nProfile: {p['display_profile']}\n"
-                
-                for i, cond in enumerate(conditions):
-                    prob_arr = probs[i][0]
-                    best_idx = np.argmax(prob_arr)
-                    label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
-                    confidence = prob_arr[best_idx] * 100
-                    
-                    is_healthy = is_low_risk_label(label)
-                    
-                    # Label Translation (Visual Only)
-                    display_label = label
-                    if lang == 'Bangla':
-                        if is_healthy: display_label = "ঝুঁকি নেই / সুস্থ"
-                        elif "Severe" in label: display_label = "তীব্র ঝুঁকি"
-                        elif "Moderate" in label: display_label = "মাঝারি ঝুঁকি"
-                        elif "Mild" in label: display_label = "মৃদু ঝুঁকি"
+            # --- FRIENDLY SUGGESTIONS ---
+            st.subheader(t['suggestions'])
+            
+            if healthy_count == 3:
+                st.balloons()
+                st.markdown(f"""
+                <div class="suggestion-friendly">
+                    {t['healthy_msg']}
+                </div>
+                """, unsafe_allow_html=True)
+                report_text += "\nResult: Healthy & Balanced."
+            else:
+                risk_scores.sort(key=lambda x: x[1], reverse=True)
+                for cond, conf, severity_label in risk_scores:
+                    if conf > 0:
+                        is_severe = "Severe" in severity_label or "High" in severity_label
+                        box_class = "suggestion-serious" if is_severe else "suggestion-friendly"
+                        
+                        st.markdown(f"##### 👉 **{cond}**")
+                        suggestions = get_casual_suggestions(cond, severity_label, lang)
+                        
+                        # Render suggestion box
+                        html_content = f"""
+                        <div class="{box_class}">
+                            <ul style="margin:0; padding-left:20px;">
+                                {''.join([f'<li>{s}</li>' for s in suggestions])}
+                            </ul>
+                        </div>
+                        """
+                        st.markdown(html_content, unsafe_allow_html=True)
+                        
+                        # Add to report
+                        clean_tips = [s.replace('**', '').replace('👋', '').strip() for s in suggestions]
+                        report_text += f"\n[{cond} Tips]:\n" + "\n".join(clean_tips) + "\n"
 
-                    report_text += f"{cond}: {label} ({confidence:.1f}%)\n"
-                    
-                    with result_cols[i]:
-                        st.markdown(f"#### {cond}")
-                        if is_healthy:
-                            st.success(f"**{display_label}**")
-                            st.progress(0)
-                            
-                            # Clinical Note Check
-                            if cond == 'Depression' and final_answers[25] >= 2:
-                                st.warning("⚠️ **Clinical Note:** Self-harm risk detected.")
-                        else:
-                            st.error(f"**{display_label}**")
-                            st.progress(int(confidence))
-                            st.caption(f"{'Risk' if lang=='English' else 'ঝুঁকি'}: {confidence:.1f}%")
+            st.markdown("---")
+            
+            st.download_button(
+                label=t['download_btn'],
+                data=report_text,
+                file_name=f"Wellness_Report_{student_name}.txt",
+                mime="text/plain"
+            )
 
-                st.download_button(t['download_btn'], report_text, file_name="Report.txt")
-
-            except Exception as e:
-                st.error(f"Error: {e}")
+        except Exception as e:
+            st.error(f"Error: {e}")
+    else:
+        st.error("Model Error")
 
 # --- FOOTER ---
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.divider()
-st.markdown(f"<div class='footer'>{t['dev_by']} <b>Team Dual Core</b><br>{t['disclaimer_short']}</div>", unsafe_allow_html=True)
+st.markdown(f"""<div class='footer'>{t['dev_by']} <strong>Team Dual Core</strong> | {t['disclaimer_short']}</div>""", unsafe_allow_html=True)
