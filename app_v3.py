@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for polished UI and hiding unnecessary labels
+# Custom CSS (FIXED: Removed the line that hid questions)
 st.markdown("""
 <style>
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
@@ -27,13 +27,11 @@ st.markdown("""
     .suggestion-friendly {background:#e3f2fd; padding:14px; border-radius:10px; border-left:5px solid #2196f3; margin:10px 0; color: #0d47a1;}
     .suggestion-serious {background:#fff3e0; padding:14px; border-radius:10px; border-left:5px solid #ff9800; margin:10px 0; color: #e65100;}
     .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #555;}
-    /* Hide radio button labels if they are empty to prevent warnings */
-    div[data-testid="stRadio"] > label {display: none;} 
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 2. TRANSLATIONS & TEXT ASSETS
+# 2. TRANSLATIONS
 # -----------------------------
 translations = {
     "English": {
@@ -169,7 +167,7 @@ def is_low_risk_label(label: str) -> bool:
 def severity_bucket(label: str) -> str:
     if any(x in label for x in ["Severe", "High"]): return "Severe/High"
     if "Moderate" in label: return "Moderate"
-    return "Mild" # Default fallback for low/minimal
+    return "Mild" 
 
 def friendly_tips(condition: str, bucket: str, lang: str):
     tips_en = {
@@ -266,16 +264,9 @@ sentinels = {t["select"], "Select...", "সিলেক্ট করুন..."}
 def is_valid(x): return x and (x not in sentinels) and (not str(x).startswith("Select"))
 
 if lock_btn:
-    # Check strict validation
-    if (student_name.strip() and 
-        is_valid(age_input) and 
-        is_valid(gender_input) and 
-        is_valid(uni_input) and 
-        is_valid(dept_input) and 
-        is_valid(year_input) and 
-        is_valid(sch_input) and 
-        cgpa_input > 0 and 
-        confirm_ok):
+    if (student_name.strip() and is_valid(age_input) and is_valid(gender_input) and 
+        is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
+        is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
         
         st.session_state.profile_locked = True
         st.sidebar.success("✅ Profile Saved!" if lang == "English" else "✅ প্রোফাইল সেভ হয়েছে!")
@@ -298,7 +289,6 @@ if not st.session_state.profile_locked:
     st.stop()
 
 # --- QUESTIONNAIRE ---
-# Mapping inputs for model
 gender_model = "Male" if gender_input in ["Male", "পুরুষ"] else "Female"
 uni_model = "Public" if uni_input in ["Public", "পাবলিক"] else "Private"
 sch_model = "Yes" if sch_input in ["Yes", "হ্যাঁ"] else "No"
@@ -325,7 +315,6 @@ with st.form("qs_form"):
     cL, cR = st.columns(2)
     for i, q in enumerate(q_list):
         with (cL if i % 2 == 0 else cR):
-            # Using unique key per question
             val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
             answers.append(opts_map[val])
             st.divider()
@@ -333,7 +322,6 @@ with st.form("qs_form"):
 
 # --- RESULTS ---
 if analyze:
-    # Prepare input dataframe
     input_dict = {
         feature_columns[0]: extract_number(age_input),
         feature_columns[1]: gender_model,
@@ -351,7 +339,6 @@ if analyze:
     with st.spinner(t["analyzing"]):
         probs = model.predict_proba(input_df)
 
-    # Q26 Safety check
     if answers[25] >= 2:
         st.markdown(f"<div class='emergency-box'><h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3><p>{t['emergency_text']}</p></div>", unsafe_allow_html=True)
 
@@ -360,9 +347,8 @@ if analyze:
 
     conds = ["Anxiety", "Stress", "Depression"]
     cards = st.columns(3)
-    risk_data = [] # (cond, conf, label, bucket, is_low)
+    risk_data = [] 
     
-    # Report text builder
     r_txt = [
         "--- WELLNESS REPORT ---",
         f"Name: {student_name}",
@@ -380,7 +366,6 @@ if analyze:
         is_low = is_low_risk_label(lbl)
         bkt = severity_bucket(lbl)
 
-        # Translated label display
         d_lbl = lbl
         if lang == "Bangla":
             if is_low: d_lbl = "ঝুঁকি নেই / কম"
@@ -405,11 +390,9 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
-    # Suggestions
     st.markdown("---")
     st.subheader(t["suggestions"])
     
-    # Filter for concerns
     concerns = [r for r in risk_data if not r[4]]
     concerns.sort(key=lambda x: x[1], reverse=True)
 
