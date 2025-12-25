@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CUSTOM CSS (FINAL VISUAL FIX) ---
+# --- CUSTOM CSS (VISUAL FIXES) ---
 st.markdown("""
 <style>
     /* 1. Main UI Elements */
@@ -63,54 +63,47 @@ st.markdown("""
     li { color: #000000 !important; }
 
     /* ============================
-       SELECTBOX FIX (Works in Sidebar + Main, Dark/Light)
+       SELECTBOX FIX (SUPER FORCE BLACK)
        ============================ */
 
-    /* Closed selectbox container (the visible field) */
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div,
-    div[data-baseweb="select"] > div {
-      background-color: #ffffff !important;
-      border: 1px solid #cccccc !important;
-    }
-
-    /* Selected value / placeholder / typed text */
-    section[data-testid="stSidebar"] div[data-baseweb="select"] span,
-    section[data-testid="stSidebar"] div[data-baseweb="select"] input,
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] input {
-      color: #000000 !important;
-      -webkit-text-fill-color: #000000 !important;
-      caret-color: #000000 !important;
-    }
-
-    /* Dropdown popup background (portal/popover) */
+    /* 1. Force background to white for the main box and popup */
+    div[data-baseweb="select"] > div,
     div[data-baseweb="popover"],
-    div[data-baseweb="popover"] > div {
-      background-color: #ffffff !important;
+    ul[role="listbox"], 
+    div[role="listbox"] {
+        background-color: #ffffff !important;
+        border-color: #cccccc !important;
     }
 
-    /* Listbox background */
-    ul[role="listbox"], div[role="listbox"] {
-      background-color: #ffffff !important;
-      border: 1px solid #cccccc !important;
+    /* 2. Force ALL text inside the selectbox to be BLACK (The fix) */
+    div[data-baseweb="select"] * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        caret-color: #000000 !important;
     }
 
-    /* Option text (BaseWeb can use LI or DIV depending on version) */
-    li[role="option"], div[role="option"] {
-      background-color: #ffffff !important;
-      color: #000000 !important;
+    /* 3. Force ALL text inside the dropdown options to be BLACK */
+    li[role="option"] *,
+    div[role="option"] * {
+        color: #000000 !important;
+    }
+    
+    /* 4. Ensure background remains white for options */
+    li[role="option"],
+    div[role="option"] {
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
 
-    /* Hover + selected state */
-    li[role="option"]:hover, div[role="option"]:hover,
-    li[role="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
-      background-color: #e9ecef !important;
-      color: #000000 !important;
+    /* 5. Hover state */
+    li[role="option"]:hover,
+    div[role="option"]:hover {
+        background-color: #e9ecef !important;
     }
 
-    /* Icon (dropdown arrow) visibility */
+    /* 6. Fix dropdown arrow icon */
     div[data-baseweb="select"] svg {
-      fill: #000000 !important;
+        fill: #000000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -351,6 +344,7 @@ st.sidebar.header(t["sidebar_title"])
 locked = st.session_state.profile_locked
 
 with st.sidebar.form("profile_form"):
+    # Using format_func for Bilingual Options (Crash-Proof)
     student_name = st.text_input(t["name"], placeholder="Enter full name", key="p_name", disabled=locked)
     age_input = st.selectbox(t["age"], opt_age, index=0, key="p_age", disabled=locked, format_func=format_option)
     gender_input = st.selectbox(t["gender"], opt_gender, index=0, key="p_gender", disabled=locked, format_func=format_option)
@@ -363,6 +357,7 @@ with st.sidebar.form("profile_form"):
     confirm_ok = st.checkbox(t["confirm"], key="p_conf", disabled=locked)
     lock_btn = st.form_submit_button(t["unlock"], type="primary", disabled=locked)
 
+# Edit Button Logic
 if locked:
     if st.sidebar.button(t["edit_profile"]):
         st.session_state.profile_locked = False
@@ -371,6 +366,7 @@ if locked:
 # Validation logic
 name_clean = student_name.strip()
 valid_name = len(name_clean) >= 3 and any(c.isalpha() for c in name_clean)
+# Check against "Select" (internal value)
 is_valid = lambda x: x != "Select"
 
 if lock_btn:
@@ -380,6 +376,7 @@ if lock_btn:
           is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
           is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
         
+        # Save validated data to session state
         st.session_state.profile_data = {
             "name": name_clean,
             "age": age_input,
@@ -410,6 +407,7 @@ if not st.session_state.profile_locked:
     st.stop()
 
 # --- QUESTIONNAIRE ---
+# Use Saved Data for Display (Greeting)
 p_data = st.session_state.profile_data
 
 st.subheader(("👋 Hello, " if lang == "English" else "👋 হ্যালো, ") + p_data["name"])
@@ -426,9 +424,11 @@ opts_map = {
 q_list = q_labels_bn if lang == "Bangla" else q_labels_en
 answers = []
 
+# --- DIRECT RENDERING ---
 cL, cR = st.columns(2)
 for i, q in enumerate(q_list):
     with (cL if i % 2 == 0 else cR):
+        # Stable key: survives language switch
         val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
         answers.append(opts_map[val])
         st.divider()
@@ -437,14 +437,15 @@ analyze = st.button(t["analyze_btn"], type="primary", use_container_width=True)
 
 # --- RESULTS ---
 if analyze:
+    # Use p_data (Internal English Values) directly for prediction
     input_dict = {
         feature_columns[0]: extract_number(p_data["age"]),
-        feature_columns[1]: p_data["gender"],
-        feature_columns[2]: p_data["uni"],
-        feature_columns[3]: p_data["dept"],
-        feature_columns[4]: p_data["year"],
+        feature_columns[1]: p_data["gender"], # Already "Male"/"Female"
+        feature_columns[2]: p_data["uni"],    # Already "Public"/"Private"
+        feature_columns[3]: p_data["dept"],   # Already "CSE", etc.
+        feature_columns[4]: p_data["year"],   # Already "First Year", etc.
         feature_columns[5]: float(p_data["cgpa"]),
-        feature_columns[6]: p_data["sch"]
+        feature_columns[6]: p_data["sch"]     # Already "Yes"/"No"
     }
     for i in range(26):
         input_dict[feature_columns[7+i]] = answers[i]
@@ -515,6 +516,7 @@ if analyze:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
+        # Show Overall Issue prominently
         top_issue = concerns[0] 
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
