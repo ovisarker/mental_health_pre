@@ -64,7 +64,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 2. TRANSLATIONS
+# 2. TRANSLATIONS & MAPPINGS
 # -----------------------------
 translations = {
     "English": {
@@ -98,15 +98,8 @@ translations = {
         "disclaimer_short": "⚠️ This is a screening tool for research purposes, not a clinical diagnosis.",
         "dev_by": "Developed by Team Dual Core",
         "helpline_title": "🆘 Emergency Helpline (BD)",
-        "emergency_text": "Your response indicates significant distress. Please contact a counselor/psychologist immediately.",
+        "emergency_text": "Your response indicates significant distress. If you feel unsafe, call 999 or a helpline immediately.",
         "clinical_note": "⚠️ **Clinical Note:** Self-harm risk detected despite low overall score.",
-        "select": "Select...",
-        "genders": ["Select...", "Male", "Female"],
-        "unis": ["Select...", "Public", "Private"],
-        "scholars": ["Select...", "Yes", "No"],
-        "years": ["Select...", "First Year", "Second Year", "Third Year", "Fourth Year", "Master"],
-        "depts": ["Select...", "CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"],
-        "ages": ["Select...", "18-22", "23-26", "27-30", "Above 30"],
         "err_fill": "Please complete all fields correctly.",
         "err_name": "Please enter a valid name (at least 3 letters)."
     },
@@ -141,19 +134,37 @@ translations = {
         "disclaimer_short": "⚠️ এটি একটি স্ক্রিনিং টুল, চিকিৎসার বিকল্প নয়।",
         "dev_by": "ডেভেলপ করেছে Team Dual Core",
         "helpline_title": "🆘 জরুরি হেল্পলাইন (BD)",
-        "emergency_text": "আপনার উত্তর মানসিক ঝুঁকির ইঙ্গিত দিচ্ছে। দয়া করে কাউন্সিলর/সাইকোলজিস্টের সাথে যোগাযোগ করুন।",
+        "emergency_text": "আপনার উত্তর মানসিক ঝুঁকির ইঙ্গিত দিচ্ছে। নিজেকে আঘাত করার আশঙ্কা থাকলে এখনই ৯৯৯ বা হেল্পলাইনে কল করুন।",
         "clinical_note": "⚠️ **ক্লিনিক্যাল নোট:** সামগ্রিক স্কোর কম হলেও আত্মহানির ঝুঁকি দেখা যাচ্ছে।",
-        "select": "সিলেক্ট করুন...",
-        "genders": ["সিলেক্ট করুন...", "পুরুষ", "মহিলা"],
-        "unis": ["সিলেক্ট করুন...", "পাবলিক", "প্রাইভেট"],
-        "scholars": ["সিলেক্ট করুন...", "হ্যাঁ", "না"],
-        "years": ["সিলেক্ট করুন...", "১ম বর্ষ", "২য় বর্ষ", "৩য় বর্ষ", "৪র্থ বর্ষ", "মাস্টার্স"],
-        "depts": ["সিলেক্ট করুন...", "সিএসই", "ইইই", "বিবিএ", "ইংরেজি", "আইন", "ফার্মাসি", "অন্যান্য"],
-        "ages": ["সিলেক্ট করুন...", "18-22", "23-26", "27-30", "Above 30"],
         "err_fill": "সব তথ্য সঠিকভাবে পূরণ করুন।",
         "err_name": "সঠিক নাম লিখুন (অন্তত ৩টি অক্ষর)।"
     }
 }
+
+# --- INTERNAL OPTIONS & MAPPINGS (The Fix) ---
+# Internal values are English (Canonical). Mappings are for Display.
+opt_gender = ["Select", "Male", "Female"]
+opt_uni = ["Select", "Public", "Private"]
+opt_dept = ["Select", "CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"]
+opt_year = ["Select", "First Year", "Second Year", "Third Year", "Fourth Year", "Master"]
+opt_sch = ["Select", "Yes", "No"]
+opt_age = ["Select", "18-22", "23-26", "27-30", "Above 30"]
+
+# Display Mappings
+bn_map = {
+    "Select": "সিলেক্ট করুন...",
+    "Male": "পুরুষ", "Female": "মহিলা",
+    "Public": "পাবলিক", "Private": "প্রাইভেট",
+    "CSE": "সিএসই", "EEE": "ইইই", "BBA": "বিবিএ", "English": "ইংরেজি", "Law": "আইন", "Pharmacy": "ফার্মাসি", "Other": "অন্যান্য",
+    "First Year": "১ম বর্ষ", "Second Year": "২য় বর্ষ", "Third Year": "৩য় বর্ষ", "Fourth Year": "৪র্থ বর্ষ", "Master": "মাস্টার্স",
+    "Yes": "হ্যাঁ", "No": "না"
+}
+
+def format_option(option):
+    # Returns Bangla label if language is Bangla, else returns the option itself
+    if st.session_state.get('lang', 'English') == 'Bangla':
+        return bn_map.get(option, option)
+    return "Select..." if option == "Select" else option
 
 # Questions
 q_labels_en = [
@@ -209,7 +220,6 @@ def severity_bucket(label: str) -> str:
     return "Mild" 
 
 def get_suggestions(condition: str, bucket: str, lang: str):
-    # Professional but friendly, Urgent for Severe
     tips_en = {
         "Anxiety": {
             "Mild": ["Practice controlled breathing exercises (4-7-8).", "Limit caffeine intake.", "Take short breaks outdoors."],
@@ -252,6 +262,8 @@ def get_suggestions(condition: str, bucket: str, lang: str):
 # -----------------------------
 if "profile_locked" not in st.session_state:
     st.session_state.profile_locked = False
+if "profile_data" not in st.session_state:
+    st.session_state.profile_data = {}
 
 def reset_all():
     st.session_state.clear()
@@ -262,7 +274,9 @@ def reset_all():
 # 5. UI & LOGIC
 # -----------------------------
 st.sidebar.markdown("### 🌐 Language / ভাষা")
-lang = st.sidebar.radio("Language", ("English", "Bangla"), label_visibility="collapsed")
+# Store lang in session state so format_func can access it
+st.session_state.lang = st.sidebar.radio("Language", ("English", "Bangla"), label_visibility="collapsed")
+lang = st.session_state.lang
 t = translations[lang]
 
 # Title
@@ -285,22 +299,20 @@ if model is None:
 # --- SIDEBAR PROFILE ---
 st.sidebar.header(t["sidebar_title"])
 
-# Check lock state
 locked = st.session_state.profile_locked
 
 with st.sidebar.form("profile_form"):
-    # All inputs disabled if locked=True
-    student_name = st.text_input(t["name"], placeholder=("Enter full name" if lang == "English" else "পূর্ণ নাম লিখুন"), disabled=locked)
-    
-    age_input = st.selectbox(t["age"], t["ages"], index=0, disabled=locked)
-    gender_input = st.selectbox(t["gender"], t["genders"], index=0, disabled=locked)
-    uni_input = st.selectbox(t["uni"], t["unis"], index=0, disabled=locked)
-    dept_input = st.selectbox(t["dept"], t["depts"], index=0, disabled=locked)
-    year_input = st.selectbox(t["year"], t["years"], index=0, disabled=locked)
-    cgpa_input = st.number_input(t["cgpa"], min_value=0.00, max_value=4.00, value=0.00, step=0.01, format="%.2f", disabled=locked)
-    sch_input = st.selectbox(t["scholarship"], t["scholars"], index=0, disabled=locked)
+    # Using format_func for Bilingual Options (Crash-Proof)
+    student_name = st.text_input(t["name"], placeholder="Enter full name", key="p_name", disabled=locked)
+    age_input = st.selectbox(t["age"], opt_age, index=0, key="p_age", disabled=locked, format_func=format_option)
+    gender_input = st.selectbox(t["gender"], opt_gender, index=0, key="p_gender", disabled=locked, format_func=format_option)
+    uni_input = st.selectbox(t["uni"], opt_uni, index=0, key="p_uni", disabled=locked, format_func=format_option)
+    dept_input = st.selectbox(t["dept"], opt_dept, index=0, key="p_dept", disabled=locked, format_func=format_option)
+    year_input = st.selectbox(t["year"], opt_year, index=0, key="p_year", disabled=locked, format_func=format_option)
+    cgpa_input = st.number_input(t["cgpa"], min_value=0.00, max_value=4.00, value=0.00, step=0.01, format="%.2f", key="p_cgpa", disabled=locked)
+    sch_input = st.selectbox(t["scholarship"], opt_sch, index=0, key="p_sch", disabled=locked, format_func=format_option)
 
-    confirm_ok = st.checkbox(t["confirm"], disabled=locked)
+    confirm_ok = st.checkbox(t["confirm"], key="p_conf", disabled=locked)
     lock_btn = st.form_submit_button(t["unlock"], type="primary", disabled=locked)
 
 # Edit Button Logic
@@ -310,24 +322,31 @@ if locked:
         st.rerun()
 
 # Validation logic
-sentinels = {t["select"], "Select...", "সিলেক্ট করুন..."}
-def is_valid(x): return x and (x not in sentinels) and (not str(x).startswith("Select"))
-
-# Strict Name Validation
 name_clean = student_name.strip()
-valid_name_len = len(name_clean) >= 3
-valid_name_char = any(c.isalpha() for c in name_clean)
-is_name_ok = valid_name_len and valid_name_char
+valid_name = len(name_clean) >= 3 and any(c.isalpha() for c in name_clean)
+# Check against "Select" (internal value)
+is_valid = lambda x: x != "Select"
 
 if lock_btn:
-    if not is_name_ok:
+    if not valid_name:
         st.sidebar.error(t["err_name"])
     elif (is_valid(age_input) and is_valid(gender_input) and 
           is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
           is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
         
+        # Save validated data to session state
+        st.session_state.profile_data = {
+            "name": name_clean,
+            "age": age_input,
+            "gender": gender_input,
+            "uni": uni_input,
+            "dept": dept_input,
+            "year": year_input,
+            "cgpa": cgpa_input,
+            "sch": sch_input
+        }
         st.session_state.profile_locked = True
-        st.rerun() # Rerun to apply 'disabled' state immediately
+        st.rerun()
     else:
         st.sidebar.error(t["err_fill"])
 
@@ -339,6 +358,8 @@ with st.sidebar.expander(t["helpline_title"], expanded=True):
 🚑 **National Emergency:** 999
 """)
 
+
+
 # Gatekeeper
 if not st.session_state.profile_locked:
     st.warning(t["fill_profile_msg"])
@@ -346,15 +367,10 @@ if not st.session_state.profile_locked:
     st.stop()
 
 # --- QUESTIONNAIRE ---
-gender_model = "Male" if gender_input in ["Male", "পুরুষ"] else "Female"
-uni_model = "Public" if uni_input in ["Public", "পাবলিক"] else "Private"
-sch_model = "Yes" if sch_input in ["Yes", "হ্যাঁ"] else "No"
-dept_map = {"সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"}
-dept_model = dept_map.get(dept_input, dept_input)
-year_map = {"১ম বর্ষ": "First Year", "২য় বর্ষ": "Second Year", "৩য় বর্ষ": "Third Year", "৪র্থ বর্ষ": "Fourth Year", "মাস্টার্স": "Master"}
-year_model = year_map.get(year_input, year_input)
+# Use Saved Data for Display (Greeting)
+p_data = st.session_state.profile_data
 
-st.subheader(("👋 Hello, " if lang == "English" else "👋 হ্যালো, ") + student_name.strip())
+st.subheader(("👋 Hello, " if lang == "English" else "👋 হ্যালো, ") + p_data["name"])
 st.subheader(t["section_title"])
 st.info(t["instructions"])
 
@@ -368,12 +384,12 @@ opts_map = {
 q_list = q_labels_bn if lang == "Bangla" else q_labels_en
 answers = []
 
-# --- DIRECT RENDERING (No Form) ---
+# --- DIRECT RENDERING ---
 cL, cR = st.columns(2)
 for i, q in enumerate(q_list):
     with (cL if i % 2 == 0 else cR):
-        # Use simple session state keying
-        val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}_{lang}")
+        # Stable key: survives language switch
+        val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
         answers.append(opts_map[val])
         st.divider()
 
@@ -381,14 +397,15 @@ analyze = st.button(t["analyze_btn"], type="primary", use_container_width=True)
 
 # --- RESULTS ---
 if analyze:
+    # Use p_data (Internal English Values) directly for prediction
     input_dict = {
-        feature_columns[0]: extract_number(age_input),
-        feature_columns[1]: gender_model,
-        feature_columns[2]: uni_model,
-        feature_columns[3]: dept_model,
-        feature_columns[4]: year_model,
-        feature_columns[5]: float(cgpa_input),
-        feature_columns[6]: sch_model
+        feature_columns[0]: extract_number(p_data["age"]),
+        feature_columns[1]: p_data["gender"], # Already "Male"/"Female"
+        feature_columns[2]: p_data["uni"],    # Already "Public"/"Private"
+        feature_columns[3]: p_data["dept"],   # Already "CSE", etc.
+        feature_columns[4]: p_data["year"],   # Already "First Year", etc.
+        feature_columns[5]: float(p_data["cgpa"]),
+        feature_columns[6]: p_data["sch"]     # Already "Yes"/"No"
     }
     for i in range(26):
         input_dict[feature_columns[7+i]] = answers[i]
@@ -398,7 +415,6 @@ if analyze:
     with st.spinner(t["analyzing"]):
         probs = model.predict_proba(input_df)
 
-    # Q26 Safety check
     if answers[25] >= 2:
         st.markdown(f"<div class='emergency-box'><h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3><p>{t['emergency_text']}</p></div>", unsafe_allow_html=True)
 
@@ -411,9 +427,9 @@ if analyze:
     
     r_txt = [
         "--- ASSESSMENT REPORT ---",
-        f"Name: {student_name}",
+        f"Name: {p_data['name']}",
         f"Date: {datetime.now().strftime('%Y-%m-%d')}",
-        f"Profile: {gender_model}, {dept_model}, CGPA {cgpa_input:.2f}",
+        f"Profile: {p_data['gender']}, {p_data['dept']}, CGPA {p_data['cgpa']:.2f}",
         "-----------------------"
     ]
 
@@ -450,10 +466,9 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
-    # --- DIRECT SUGGESTIONS SECTION ---
+    # --- SUGGESTIONS ---
     st.markdown("---")
     
-    # Identify Concerns
     concerns = [r for r in risk_data if not r[4]] 
     concerns.sort(key=lambda x: x[1], reverse=True) 
 
@@ -461,7 +476,6 @@ if analyze:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
-        # 1. Show Overall Issue prominently
         top_issue = concerns[0] 
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
@@ -475,7 +489,6 @@ if analyze:
             style = "suggestion-severe" if is_severe else "suggestion-box"
             
             st.markdown(f"**{c} ({lbl})**")
-            # Using black color explicitly for visibility
             st.markdown(f"<div class='{style}' style='color:black;'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
             
             r_txt.append(f"\n[{c} Suggestions]")
@@ -485,7 +498,7 @@ if analyze:
     st.download_button(
         label=t["download_btn"],
         data="\n".join(r_txt),
-        file_name=f"Report_{student_name.replace(' ', '_')}.txt",
+        file_name=f"Report_{p_data['name'].replace(' ', '_')}.txt",
         mime="text/plain"
     )
 
