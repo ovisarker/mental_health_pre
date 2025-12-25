@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CUSTOM CSS (VISUAL FIXES) ---
+# --- CUSTOM CSS (FINAL VISUAL FIX) ---
 st.markdown("""
 <style>
     /* 1. Main UI Elements */
@@ -62,64 +62,55 @@ st.markdown("""
     
     li { color: #000000 !important; }
 
-    /* ==========================================
-       Streamlit Selectbox: Always readable
-       White background + black text (sidebar + main)
-       ========================================== */
+    /* ============================
+       SELECTBOX FIX (Works in Sidebar + Main, Dark/Light)
+       ============================ */
 
-    /* Closed selectbox (the visible field) */
+    /* Closed selectbox container (the visible field) */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div {
       background-color: #ffffff !important;
       border: 1px solid #cccccc !important;
     }
 
-    /* Text inside closed selectbox (selected value / placeholder) */
+    /* Selected value / placeholder / typed text */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] span,
+    section[data-testid="stSidebar"] div[data-baseweb="select"] input,
     div[data-baseweb="select"] span,
-    div[data-baseweb="select"] input,
-    div[data-baseweb="select"] div {
+    div[data-baseweb="select"] input {
       color: #000000 !important;
       -webkit-text-fill-color: #000000 !important;
+      caret-color: #000000 !important;
     }
 
-    /* Dropdown popup container (portal/popover) */
+    /* Dropdown popup background (portal/popover) */
     div[data-baseweb="popover"],
     div[data-baseweb="popover"] > div {
       background-color: #ffffff !important;
-      color: #000000 !important;
     }
 
-    /* Menu containers (BaseWeb sometimes uses menu instead of listbox) */
-    div[data-baseweb="menu"] {
-      background-color: #ffffff !important;
-      color: #000000 !important;
-    }
-
-    /* Listbox container */
+    /* Listbox background */
     ul[role="listbox"], div[role="listbox"] {
       background-color: #ffffff !important;
       border: 1px solid #cccccc !important;
     }
 
-    /* Options can be DIV or LI depending on Streamlit/BaseWeb version */
-    div[role="option"], li[role="option"] {
+    /* Option text (BaseWeb can use LI or DIV depending on version) */
+    li[role="option"], div[role="option"] {
       background-color: #ffffff !important;
       color: #000000 !important;
     }
 
-    /* Hover/active option */
-    div[role="option"]:hover, li[role="option"]:hover,
-    div[role="option"][aria-selected="true"], li[role="option"][aria-selected="true"] {
+    /* Hover + selected state */
+    li[role="option"]:hover, div[role="option"]:hover,
+    li[role="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
       background-color: #e9ecef !important;
       color: #000000 !important;
     }
 
-    /* Absolute fallback: force all text inside dropdown menus to be black */
-    div[data-baseweb="popover"] * ,
-    ul[role="listbox"] * ,
-    div[role="listbox"] * ,
-    div[data-baseweb="menu"] * {
-      color: #000000 !important;
-      -webkit-text-fill-color: #000000 !important;
+    /* Icon (dropdown arrow) visibility */
+    div[data-baseweb="select"] svg {
+      fill: #000000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
