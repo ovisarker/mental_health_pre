@@ -19,16 +19,47 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS (FIXED TEXT VISIBILITY)
+# Custom CSS
 st.markdown("""
 <style>
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
-    .emergency-box {background:#ffebee; border:2px solid #ef5350; padding:15px; border-radius:10px; color:#c62828; margin:14px 0;}
-    /* Suggestion Box Styling - Black Text for Visibility */
-    .suggestion-box {background:#f0f7ff; padding:15px; border-radius:10px; border-left:5px solid #007bff; margin:10px 0; color: #000000;}
-    .suggestion-severe {background:#fff3cd; padding:15px; border-radius:10px; border-left:5px solid #ffc107; margin:10px 0; color: #000000;}
-    .locked-hint {background:#f8f9fa; border:1px solid #ddd; padding:14px; border-radius:10px; color: #333;}
-    /* Hide Radio Label hack removed to ensure visibility */
+    
+    .emergency-box {
+        background-color: #ffebee; 
+        border: 2px solid #ef5350; 
+        padding: 15px; 
+        border-radius: 10px; 
+        color: #c62828 !important; 
+        margin: 14px 0;
+    }
+    
+    .suggestion-box {
+        background-color: #f0f7ff; 
+        padding: 15px; 
+        border-radius: 10px; 
+        border-left: 5px solid #007bff; 
+        margin: 10px 0; 
+        color: #000000 !important;
+    }
+    
+    .suggestion-severe {
+        background-color: #fff3cd; 
+        padding: 15px; 
+        border-radius: 10px; 
+        border-left: 5px solid #ffc107; 
+        margin: 10px 0; 
+        color: #000000 !important;
+    }
+    
+    .locked-hint {
+        background-color: #f8f9fa; 
+        border: 1px solid #ddd; 
+        padding: 14px; 
+        border-radius: 10px; 
+        color: #333 !important;
+    }
+    
+    li { color: #000000 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,6 +75,7 @@ translations = {
         "name": "Student Name (Required)",
         "confirm": "I confirm the profile information is correct",
         "unlock": "✅ Save & Start Assessment",
+        "edit_profile": "✏️ Edit Profile",
         "age": "1. Age Group",
         "gender": "2. Gender",
         "uni": "3. University Type",
@@ -75,6 +107,8 @@ translations = {
         "years": ["Select...", "First Year", "Second Year", "Third Year", "Fourth Year", "Master"],
         "depts": ["Select...", "CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"],
         "ages": ["Select...", "18-22", "23-26", "27-30", "Above 30"],
+        "err_fill": "Please complete all fields correctly.",
+        "err_name": "Please enter a valid name (at least 3 letters)."
     },
     "Bangla": {
         "title": "শিক্ষার্থী মানসিক স্বাস্থ্য মূল্যায়ন",
@@ -84,6 +118,7 @@ translations = {
         "name": "শিক্ষার্থীর নাম (আবশ্যক)",
         "confirm": "আমি নিশ্চিত করছি তথ্য সঠিক",
         "unlock": "✅ সেভ করে টেস্ট শুরু করুন",
+        "edit_profile": "✏️ প্রোফাইল এডিট করুন",
         "age": "১. বয়স গ্রুপ",
         "gender": "২. লিঙ্গ",
         "uni": "৩. বিশ্ববিদ্যালয়ের ধরণ",
@@ -115,6 +150,8 @@ translations = {
         "years": ["সিলেক্ট করুন...", "১ম বর্ষ", "২য় বর্ষ", "৩য় বর্ষ", "৪র্থ বর্ষ", "মাস্টার্স"],
         "depts": ["সিলেক্ট করুন...", "সিএসই", "ইইই", "বিবিএ", "ইংরেজি", "আইন", "ফার্মাসি", "অন্যান্য"],
         "ages": ["সিলেক্ট করুন...", "18-22", "23-26", "27-30", "Above 30"],
+        "err_fill": "সব তথ্য সঠিকভাবে পূরণ করুন।",
+        "err_name": "সঠিক নাম লিখুন (অন্তত ৩টি অক্ষর)।"
     }
 }
 
@@ -172,38 +209,39 @@ def severity_bucket(label: str) -> str:
     return "Mild" 
 
 def get_suggestions(condition: str, bucket: str, lang: str):
+    # Professional but friendly, Urgent for Severe
     tips_en = {
         "Anxiety": {
-            "Mild": ["Practice controlled breathing exercises.", "Limit caffeine intake.", "Take short breaks outdoors."],
+            "Mild": ["Practice controlled breathing exercises (4-7-8).", "Limit caffeine intake.", "Take short breaks outdoors."],
             "Moderate": ["Maintain a worry journal.", "Engage in regular physical activity.", "Reduce screen time before sleep."],
-            "Severe/High": ["Consult a university counselor.", "Reach out to a trusted family member.", "Contact the helpline if feeling unsafe."]
+            "Severe/High": ["Talk to a counselor/psychologist today.", "Tell a family member you trust.", "If you feel unsafe, call the helpline immediately."]
         },
         "Stress": {
-            "Mild": ["Focus on one task at a time.", "Take short breaks during study sessions.", "Maintain a balanced diet."],
-            "Moderate": ["Create a prioritized to-do list.", "Practice muscle relaxation techniques.", "Discuss your academic load with a peer."],
-            "Severe/High": ["Seek guidance from an academic advisor.", "Ensure adequate sleep and rest.", "Consider professional stress management."]
+            "Mild": ["Focus on one task at a time.", "Take short breaks during study.", "Maintain a balanced diet."],
+            "Moderate": ["Create a prioritized to-do list.", "Practice muscle relaxation.", "Discuss your academic load with a peer."],
+            "Severe/High": ["Seek guidance from an academic advisor.", "Ensure adequate sleep.", "Consider professional stress management."]
         },
         "Depression": {
-            "Mild": ["Spend time in natural sunlight.", "Organize your immediate workspace.", "Connect with a friend or family member."],
-            "Moderate": ["Engage in a hobby or physical activity.", "Maintain a regular sleep schedule.", "Set small, achievable daily goals."],
-            "Severe/High": ["Seek professional psychological support.", "Confide in a trusted person.", "Contact emergency services if self-harm thoughts occur."]
+            "Mild": ["Spend time in natural sunlight.", "Organize your immediate workspace.", "Connect with a friend."],
+            "Moderate": ["Engage in a hobby.", "Maintain a regular sleep schedule.", "Set small, achievable daily goals."],
+            "Severe/High": ["Seek professional psychological support today.", "Confide in a trusted person.", "Contact emergency services if self-harm thoughts occur."]
         },
     }
     tips_bn = {
         "Anxiety": {
             "Mild": ["নিয়ন্ত্রিত শ্বাস-প্রশ্বাসের ব্যায়াম করুন।", "ক্যাফেইন গ্রহণ সীমিত করুন।", "বাইরে কিছুক্ষণ বিরতি নিন।"],
             "Moderate": ["দুশ্চিন্তাগুলো লিখে রাখুন।", "নিয়মিত শারীরিক ব্যায়াম করুন।", "ঘুমানোর আগে মোবাইল ব্যবহার কমান।"],
-            "Severe/High": ["বিশ্ববিদ্যালয়ের কাউন্সিলরের পরামর্শ নিন।", "বিশ্বস্ত পরিবারের সদস্যের সাথে কথা বলুন।", "নিরাপদ বোধ না করলে হেল্পলাইনে যোগাযোগ করুন।"]
+            "Severe/High": ["আজই একজন কাউন্সিলর/সাইকোলজিস্টের সাথে কথা বলুন।", "বিশ্বস্ত পরিবারের সদস্যকে জানান।", "নিরাপদ বোধ না করলে এখনই হেল্পলাইনে কল করুন।"]
         },
         "Stress": {
             "Mild": ["একবারে একটি কাজে মনোযোগ দিন।", "পড়ার মাঝে ছোট বিরতি নিন।", "সুষম খাবার গ্রহণ করুন।"],
-            "Moderate": ["কাজের অগ্রাধিকার তালিকা তৈরি করুন।", "পেশী শিথিলকরণ ব্যায়াম করুন।", "সহপাঠীর সাথে পড়াশোনার চাপ নিয়ে আলোচনা করুন।"],
-            "Severe/High": ["একাডেমিক অ্যাডভাইজারের পরামর্শ নিন।", "পর্যাপ্ত ঘুম এবং বিশ্রাম নিশ্চিত করুন।", "পেশাদার স্ট্রেস ম্যানেজমেন্টের সাহায্য নিন।"]
+            "Moderate": ["কাজের অগ্রাধিকার তালিকা তৈরি করুন।", "পেশী শিথিলকরণ ব্যায়াম করুন।", "সহপাঠীর সাথে কথা বলুন।"],
+            "Severe/High": ["একাডেমিক অ্যাডভাইজারের পরামর্শ নিন।", "পর্যাপ্ত ঘুম নিশ্চিত করুন।", "পেশাদার সাহায্য নিন।"]
         },
         "Depression": {
-            "Mild": ["প্রাকৃতিক রোদে কিছু সময় কাটান।", "নিজের পড়ার টেবিল গুছিয়ে রাখুন।", "বন্ধু বা পরিবারের সাথে যোগাযোগ করুন।"],
-            "Moderate": ["শখের কাজ বা ব্যায়াম করুন।", "নিয়মিত ঘুমের রুটিন মেনে চলুন।", "ছোট এবং সহজ লক্ষ্য নির্ধারণ করুন।"],
-            "Severe/High": ["পেশাদার সাইকোলজিস্টের সাহায্য নিন।", "বিশ্বস্ত কারো সাথে কথা বলুন।", "আত্মহানির চিন্তা এলে জরুরি সেবায় যোগাযোগ করুন।"]
+            "Mild": ["প্রাকৃতিক রোদে কিছু সময় কাটান।", "নিজের পড়ার টেবিল গুছিয়ে রাখুন।", "বন্ধুর সাথে কথা বলুন।"],
+            "Moderate": ["শখের কাজ করুন।", "নিয়মিত ঘুমের রুটিন মেনে চলুন।", "ছোট লক্ষ্য নির্ধারণ করুন।"],
+            "Severe/High": ["আজই পেশাদার সাইকোলজিস্টের সাহায্য নিন।", "বিশ্বস্ত কারো সাথে কথা বলুন।", "আত্মহানির চিন্তা এলে এখনই জরুরি সেবায় যোগাযোগ করুন।"]
         },
     }
     dataset = tips_bn if lang == "Bangla" else tips_en
@@ -247,34 +285,51 @@ if model is None:
 # --- SIDEBAR PROFILE ---
 st.sidebar.header(t["sidebar_title"])
 
-with st.sidebar.form("profile_form"):
-    student_name = st.text_input(t["name"], placeholder=("Enter full name" if lang == "English" else "পূর্ণ নাম লিখুন"))
-    
-    age_input = st.selectbox(t["age"], t["ages"], index=0)
-    gender_input = st.selectbox(t["gender"], t["genders"], index=0)
-    uni_input = st.selectbox(t["uni"], t["unis"], index=0)
-    dept_input = st.selectbox(t["dept"], t["depts"], index=0)
-    year_input = st.selectbox(t["year"], t["years"], index=0)
-    cgpa_input = st.number_input(t["cgpa"], min_value=0.00, max_value=4.00, value=0.00, step=0.01, format="%.2f")
-    sch_input = st.selectbox(t["scholarship"], t["scholars"], index=0)
+# Check lock state
+locked = st.session_state.profile_locked
 
-    confirm_ok = st.checkbox(t["confirm"])
-    lock_btn = st.form_submit_button(t["unlock"], type="primary")
+with st.sidebar.form("profile_form"):
+    # All inputs disabled if locked=True
+    student_name = st.text_input(t["name"], placeholder=("Enter full name" if lang == "English" else "পূর্ণ নাম লিখুন"), disabled=locked)
+    
+    age_input = st.selectbox(t["age"], t["ages"], index=0, disabled=locked)
+    gender_input = st.selectbox(t["gender"], t["genders"], index=0, disabled=locked)
+    uni_input = st.selectbox(t["uni"], t["unis"], index=0, disabled=locked)
+    dept_input = st.selectbox(t["dept"], t["depts"], index=0, disabled=locked)
+    year_input = st.selectbox(t["year"], t["years"], index=0, disabled=locked)
+    cgpa_input = st.number_input(t["cgpa"], min_value=0.00, max_value=4.00, value=0.00, step=0.01, format="%.2f", disabled=locked)
+    sch_input = st.selectbox(t["scholarship"], t["scholars"], index=0, disabled=locked)
+
+    confirm_ok = st.checkbox(t["confirm"], disabled=locked)
+    lock_btn = st.form_submit_button(t["unlock"], type="primary", disabled=locked)
+
+# Edit Button Logic
+if locked:
+    if st.sidebar.button(t["edit_profile"]):
+        st.session_state.profile_locked = False
+        st.rerun()
 
 # Validation logic
 sentinels = {t["select"], "Select...", "সিলেক্ট করুন..."}
 def is_valid(x): return x and (x not in sentinels) and (not str(x).startswith("Select"))
 
+# Strict Name Validation
+name_clean = student_name.strip()
+valid_name_len = len(name_clean) >= 3
+valid_name_char = any(c.isalpha() for c in name_clean)
+is_name_ok = valid_name_len and valid_name_char
+
 if lock_btn:
-    if (student_name.strip() and is_valid(age_input) and is_valid(gender_input) and 
-        is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
-        is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
+    if not is_name_ok:
+        st.sidebar.error(t["err_name"])
+    elif (is_valid(age_input) and is_valid(gender_input) and 
+          is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
+          is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
         
         st.session_state.profile_locked = True
-        st.sidebar.success("✅ Profile Saved!" if lang == "English" else "✅ প্রোফাইল সেভ হয়েছে!")
+        st.rerun() # Rerun to apply 'disabled' state immediately
     else:
-        st.session_state.profile_locked = False
-        st.sidebar.error("Please complete all fields correctly." if lang == "English" else "সব তথ্য সঠিকভাবে পূরণ করুন।")
+        st.sidebar.error(t["err_fill"])
 
 # Helpline
 with st.sidebar.expander(t["helpline_title"], expanded=True):
@@ -352,7 +407,7 @@ if analyze:
 
     conds = ["Anxiety", "Stress", "Depression"]
     cards = st.columns(3)
-    risk_data = [] # (cond, conf, label, bucket, is_low)
+    risk_data = [] 
     
     r_txt = [
         "--- ASSESSMENT REPORT ---",
@@ -395,18 +450,19 @@ if analyze:
         r_txt.append(f"{c}: {lbl} ({conf:.1f}%)")
         risk_data.append((c, conf, lbl, bkt, is_low))
 
-    # --- SUGGESTIONS ---
+    # --- DIRECT SUGGESTIONS SECTION ---
     st.markdown("---")
     
-    concerns = [r for r in risk_data if not r[4]]
-    concerns.sort(key=lambda x: x[1], reverse=True)
+    # Identify Concerns
+    concerns = [r for r in risk_data if not r[4]] 
+    concerns.sort(key=lambda x: x[1], reverse=True) 
 
     if not concerns:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
-        # Show Overall Issue prominently
-        top_issue = concerns[0]
+        # 1. Show Overall Issue prominently
+        top_issue = concerns[0] 
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
         r_txt.append(f"\n{t['overall_label']} {top_issue[0]} ({top_issue[2]})")
@@ -435,4 +491,7 @@ if analyze:
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.divider()
-st.markdown(f"<div class='footer'>{t['dev_by']} | {t['disclaimer_short']}</div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div class='footer'>{t['dev_by']} | {t['disclaimer_short']}</div>",
+    unsafe_allow_html=True
+)
