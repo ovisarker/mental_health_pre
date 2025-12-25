@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import re
+import plotly.express as px
 import warnings
 from datetime import datetime
 
@@ -17,10 +18,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Modern Footer & Cards
+# Custom CSS for polished look
 st.markdown("""
 <style>
-    /* Metric Cards Styling */
+    /* Card Styling */
     div[data-testid="metric-container"] {
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -30,41 +31,11 @@ st.markdown("""
     }
     /* Footer Styling */
     .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #f1f3f6;
-        color: #333;
         text-align: center;
-        padding: 10px;
-        border-top: 1px solid #e0e0e0;
-        z-index: 100;
-    }
-    .footer-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        font-family: sans-serif;
-    }
-    .dev-section {
-        text-align: center;
-        line-height: 1.4;
-        font-size: 14px;
-        color: #555;
-    }
-    .dev-title {
-        font-weight: bold;
-        color: #2c3e50;
-        margin-bottom: 5px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        padding: 20px;
         font-size: 12px;
-    }
-    .dev-name {
-        font-weight: 600;
-        color: #000;
+        color: #666;
+        border-top: 1px solid #eee;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,22 +116,32 @@ st.markdown("---")
 # --- 4. SIDEBAR PROFILE ---
 st.sidebar.header("📝 Student Profile")
 
-def get_index(options, default_idx=0):
-    return 0 if st.session_state.reset else default_idx
+# Safe Index Function (Prevents Crashes)
+def get_safe_index(options, default_idx=0):
+    if st.session_state.reset:
+        return 0
+    # Ensure index is within bounds
+    return min(default_idx, len(options) - 1)
 
 # Profile Inputs
-age_input = st.sidebar.selectbox("1. Age Group", ['18-22', '23-26', '27-30', 'Above 30'], index=get_index(4))
-gender = st.sidebar.selectbox("2. Gender", ['Male', 'Female'], index=get_index(2))
-uni = st.sidebar.selectbox("3. University Type", ['Public', 'Private'], index=get_index(2))
-dept = st.sidebar.text_input("4. Department", value="" if st.session_state.reset else "CSE")
-year = st.sidebar.selectbox("5. Academic Year", ['First Year', 'Second Year', 'Third Year', 'Fourth Year', 'Master'], index=get_index(5))
+age_input = st.sidebar.selectbox("1. Age Group", ['18-22', '23-26', '27-30', 'Above 30'], index=get_safe_index(['18-22', '23-26', '27-30', 'Above 30'], 0))
+gender = st.sidebar.selectbox("2. Gender", ['Male', 'Female'], index=get_safe_index(['Male', 'Female'], 0))
+uni = st.sidebar.selectbox("3. University Type", ['Public', 'Private'], index=get_safe_index(['Public', 'Private'], 1))
+
+# Dept Fix: Selectbox instead of Text to avoid bad inputs
+dept_options = ["CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"]
+dept = st.sidebar.selectbox("4. Department", dept_options, index=get_safe_index(dept_options, 0))
+
+year = st.sidebar.selectbox("5. Academic Year", ['First Year', 'Second Year', 'Third Year', 'Fourth Year', 'Master'], index=get_safe_index(['First Year', '...'], 0))
+
 cgpa_val = 0.00 if st.session_state.reset else 3.50
 cgpa_input = st.sidebar.number_input("6. Current CGPA", min_value=0.00, max_value=4.00, value=cgpa_val, step=0.01, format="%.2f")
-scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], index=get_index(2))
+
+scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], index=get_safe_index(['Yes', 'No'], 1))
 
 st.sidebar.markdown("---")
 
-# --- HELPLINE (Sidebar Bottom) ---
+# --- HELPLINE ---
 with st.sidebar.expander("🆘 Emergency Helpline (BD)", expanded=True):
     st.markdown("""
     📞 **Kaan Pete Roi:** 01779554391  
@@ -168,9 +149,9 @@ with st.sidebar.expander("🆘 Emergency Helpline (BD)", expanded=True):
     🚑 **National Emergency:** 999
     """)
 
-# --- 5. QUESTIONNAIRE (SINGLE SECTION) ---
+# --- 5. QUESTIONNAIRE ---
 st.subheader("📋 Behavioral Self-Assessment")
-st.info("💡 **Instructions:** Please slide the scale to indicate how frequently you have felt these emotions **over the last semester**.")
+st.info("💡 **Instructions:** Please slide the scale to indicate how frequently you have felt these emotions **over the last 2 weeks**.")
 st.caption("Scale: **Not at all** (0) → **Sometimes** (1) → **Often** (2) → **Very Often** (3)")
 
 slider_options = ["Not at all", "Sometimes", "Often", "Very Often"]
@@ -234,11 +215,11 @@ if analyze_btn:
         input_df = pd.DataFrame([input_dict])
         
         try:
-            with st.spinner("Analyzing pattern..."):
+            with st.spinner("Machine Learning Model is analyzing..."):
                 probs = model.predict_proba(input_df)
             
-            st.success("✅ Assessment Complete")
-            st.subheader("📊 Prediction Results")
+            st.success("✅ Prediction Complete")
+            st.subheader("📊 Assessment Result")
             
             result_cols = st.columns(3)
             conditions = ['Anxiety', 'Stress', 'Depression']
@@ -256,6 +237,7 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
+                # Smart Label Mapping
                 display_label = label
                 if label == "Minimal Anxiety": display_label = "No Anxiety / Healthy"
                 if label == "Low Stress": display_label = "No Stress / Healthy"
@@ -275,24 +257,36 @@ if analyze_btn:
                     else:
                         st.error(f"**{display_label}**")
                         st.progress(int(confidence))
-                        st.caption(f"Risk Probability: {confidence:.1f}%")
+                        st.caption(f"Prediction Confidence: {confidence:.1f}%")
                         risk_scores.append((cond, confidence))
 
             st.markdown("---")
             
-            # --- RECOMMENDATIONS (No Chart) ---
-            st.subheader("💡 Suggestions")
-            if healthy_count == 3:
-                st.balloons()
-                st.success("🎉 **Status: Healthy**")
-                st.markdown("Your input pattern suggests a balanced mental state.")
-                for tip in get_recommendations("Healthy"):
-                    st.info(tip)
-            else:
-                dominant = max(risk_scores, key=lambda x: x[1])
-                st.warning(f"🚨 **Primary Concern: {dominant[0]}**")
-                for tip in get_recommendations(dominant[0]):
-                    st.info(tip)
+            # --- VISUALIZATION (THEME ADAPTIVE) ---
+            col_v1, col_v2 = st.columns([1, 1])
+            
+            with col_v1:
+                st.subheader("📈 Risk Visualization")
+                viz_scores = [score if score > 0 else 5 for _, score in risk_scores]
+                df_chart = pd.DataFrame({'Condition': conditions, 'Risk Level': viz_scores})
+                
+                # Simple, Adaptive Chart (No hardcoded background)
+                fig = px.line_polar(df_chart, r='Risk Level', theta='Condition', line_close=True, range_r=[0, 100])
+                fig.update_traces(fill='toself')
+                # No template="plotly_white" ensures it fits dark/light mode
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col_v2:
+                st.subheader("💡 Suggestions")
+                if healthy_count == 3:
+                    st.balloons()
+                    st.success("🎉 **Status: Healthy**")
+                    st.markdown("Your input pattern suggests a balanced mental state.")
+                else:
+                    dominant = max(risk_scores, key=lambda x: x[1])
+                    st.warning(f"🚨 **Primary Concern: {dominant[0]}**")
+                    for tip in get_recommendations(dominant[0]):
+                        st.info(tip)
 
             # Download Report
             st.markdown("---")
@@ -311,21 +305,16 @@ if analyze_btn:
     else:
         st.error("Feature column count mismatch!")
 
-# --- 7. MODERN FOOTER ---
-st.markdown("<br><br>", unsafe_allow_html=True)
+# --- 7. FOOTER (MODERN) ---
+st.markdown("<br><br><br>", unsafe_allow_html=True)
 st.divider()
 
 st.markdown("""
-<div style="text-align: center; font-family: sans-serif; color: #555;">
-    <p style="font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
-        Developed by
-    </p>
-    <h3 style="margin: 0; color: #2c3e50;">Team Dual Core</h3>
-    <p style="margin: 5px 0 0 0; font-size: 14px;">Ovi Sarker</p>
-    <p style="margin: 2px 0 0 0; font-size: 14px;">BM Sabbir Hossen Riad</p>
-    <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
-        Department of CSE • Daffodil International University
-    </p>
+<div class='footer'>
+    <div style="font-weight: bold; margin-bottom: 5px;">Developed by</div>
+    <div style="font-size: 16px; color: #333; font-weight: 600;">Team Dual Core</div>
+    <div style="font-size: 14px; margin-top: 5px;">Ovi Sarker & BM Sabbir Hossen Riad</div>
+    <div style="font-size: 12px; color: #777; margin-top: 5px;">Department of CSE, Daffodil International University</div>
     <br>
     <div style="background-color: #fff3cd; padding: 10px; border-radius: 5px; display: inline-block; border: 1px solid #ffeeba;">
         <span style="font-size: 11px; color: #856404;">
