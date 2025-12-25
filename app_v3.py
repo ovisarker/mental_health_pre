@@ -5,7 +5,6 @@ import joblib
 import re
 import warnings
 from datetime import datetime
-import plotly.express as px
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -18,18 +17,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished UI
+# Custom CSS for Professional Cards
 st.markdown("""
 <style>
     div[data-testid="metric-container"] {
-        background-color: #f8f9fa; border: 1px solid #dee2e6;
-        padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #ffffff; border: 1px solid #e0e0e0;
+        padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     .footer {
         text-align: center; padding: 20px; font-size: 12px; color: #666; border-top: 1px solid #eee;
     }
     .emergency-box {
         background-color: #ffebee; border: 2px solid #ef5350; padding: 15px; border-radius: 8px; color: #c62828; margin-bottom: 20px;
+    }
+    .suggestion-box {
+        background-color: #f1f8e9; padding: 15px; border-radius: 8px; border-left: 5px solid #8bc34a; margin-top: 10px;
+    }
+    .suggestion-warning {
+        background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 5px solid #ff9800; margin-top: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -38,8 +43,8 @@ st.markdown("""
 translations = {
     'English': {
         'title': "Student Mental Health Assessment & Risk Prediction",
-        'subtitle': "A Machine Learning Based Screening System",
-        'reset_btn': "🔄 Reset Form",
+        'subtitle': "Machine Learning Based Screening System",
+        'reset_btn': "🔄 Reset Assessment",
         'sidebar_title': "📝 Student Profile",
         'age': "1. Age Group",
         'gender': "2. Gender",
@@ -49,19 +54,18 @@ translations = {
         'cgpa': "6. Current CGPA",
         'scholarship': "7. Scholarship/Waiver?",
         'helpline_title': "🆘 Emergency Helpline (BD)",
-        'section_title': "📋 Behavioral Self-Assessment",
-        'instructions': "💡 **Instructions:** Please slide the scale to indicate how frequently you have felt these emotions **over the last 2 weeks**.",
+        'section_title': "📋 Behavioral Assessment",
+        'instructions': "💡 **Instructions:** Please indicate how frequently you have experienced these feelings **over the last 2 weeks**.",
         'scale_caption': "Scale: **Not at all** (0) → **Sometimes** (1) → **Often** (2) → **Very Often** (3)",
         'analyze_btn': "🚀 Analyze Risk Level",
-        'analyzing': "Machine Learning Model is analyzing...",
+        'analyzing': "Analyzing behavioral patterns...",
         'success': "✅ Assessment Complete",
-        'result_title': "📊 Assessment Result",
-        'suggestions': "💡 Suggestions",
-        'healthy_msg': "🎉 **Status: Healthy**\nYour input pattern suggests a balanced mental state.",
+        'result_title': "📊 Clinical Risk Assessment",
+        'suggestions': "💡 Professional Recommendations",
+        'healthy_msg': "🎉 **Status: Mentally Resilient**\nYour responses indicate a stable mental state. Continue maintaining your current lifestyle.",
         'download_btn': "📥 Download Assessment Report",
-        'disclaimer_short': "⚠️ **Disclaimer:** This is a Machine Learning based screening tool. Results are probabilistic and do not replace professional medical advice.",
+        'disclaimer_short': "⚠️ **Disclaimer:** This tool uses ML algorithms for screening. It is not a substitute for clinical diagnosis.",
         'dev_by': "Developed by",
-        'risk_viz': "Risk Visualization",
         'slider_opts': ["Not at all", "Sometimes", "Often", "Very Often"],
         'genders': ['Male', 'Female'],
         'unis': ['Public', 'Private'],
@@ -72,7 +76,7 @@ translations = {
     'Bangla': {
         'title': "শিক্ষার্থী মানসিক স্বাস্থ্য ও ঝুঁকি মূল্যায়ন",
         'subtitle': "মেশিন লার্নিং ভিত্তিক স্ক্রিনিং সিস্টেম",
-        'reset_btn': "🔄 ফর্ম রিসেট করুন",
+        'reset_btn': "🔄 রিসেট করুন",
         'sidebar_title': "📝 শিক্ষার্থীর প্রোফাইল",
         'age': "১. বয়স গ্রুপ",
         'gender': "২. লিঙ্গ",
@@ -82,19 +86,18 @@ translations = {
         'cgpa': "৬. বর্তমান সিজিপিএ (CGPA)",
         'scholarship': "৭. স্কলারশিপ/ওয়েভার আছে?",
         'helpline_title': "🆘 জরুরি হেল্পলাইন (BD)",
-        'section_title': "📋 আচরণগত আত্ম-মূল্যায়ন",
-        'instructions': "💡 **নির্দেশনা:** গত **২ সপ্তাহে** আপনি এই অনুভূতিগুলো কতবার অনুভব করেছেন তা স্লাইড করে জানান।",
+        'section_title': "📋 আচরণগত মূল্যায়ন",
+        'instructions': "💡 **নির্দেশনা:** গত **২ সপ্তাহে** আপনি এই অনুভূতিগুলো কতবার অনুভব করেছেন তা জানান।",
         'scale_caption': "স্কেল: **একদম না** (০) → **মাঝে মাঝে** (১) → **প্রায়ই** (২) → **খুব বেশি** (৩)",
         'analyze_btn': "🚀 ঝুঁকি বিশ্লেষণ করুন",
         'analyzing': "মেশিন লার্নিং মডেল বিশ্লেষণ করছে...",
         'success': "✅ মূল্যায়ন সম্পন্ন হয়েছে",
-        'result_title': "📊 ফলাফল",
-        'suggestions': "💡 পরামর্শ",
-        'healthy_msg': "🎉 **অবস্থা: সুস্থ**\nআপনার মানসিক অবস্থা ভারসাম্যপূর্ণ মনে হচ্ছে।",
+        'result_title': "📊 ক্লিনিক্যাল ঝুঁকি মূল্যায়ন",
+        'suggestions': "💡 পেশাদার পরামর্শ",
+        'healthy_msg': "🎉 **অবস্থা: মানসিকভাবে স্থিতিশীল**\nআপনার মানসিক অবস্থা ভারসাম্যপূর্ণ। বর্তমান জীবনধারা বজায় রাখুন।",
         'download_btn': "📥 রিপোর্ট ডাউনলোড করুন",
-        'disclaimer_short': "⚠️ **সতর্কতা:** এটি একটি মেশিন লার্নিং গবেষণা প্রকল্প। এই ফলাফল পেশাদার ডাক্তারি পরামর্শের বিকল্প নয়।",
+        'disclaimer_short': "⚠️ **সতর্কতা:** এটি একটি স্ক্রিনিং টুল। এটি পেশাদার ক্লিনিক্যাল ডায়াগনসিসের বিকল্প নয়।",
         'dev_by': "ডেভেলপ করেছে",
-        'risk_viz': "ঝুঁকির গ্রাফ",
         'slider_opts': ["একদম না", "মাঝে মাঝে", "প্রায়ই", "খুব বেশি"],
         'genders': ['পুরুষ', 'মহিলা'],
         'unis': ['পাবলিক', 'প্রাইভেট'],
@@ -166,20 +169,56 @@ def extract_number(text):
     except:
         return 0.0
 
-def get_recommendations(condition, lang):
-    tips_en = {
-        "Anxiety": ["🌬️ Deep Breathing (4-7-8)", "🧘 Grounding Technique", "☕ Limit Caffeine"],
-        "Stress": ["📝 Make To-Do List", "🚶 10-min Walk", "💤 8 Hours Sleep"],
-        "Depression": ["🤝 Talk to a Friend", "🌞 Morning Sunlight", "📅 Daily Routine"],
-        "Healthy": ["🎉 Keep Going!", "💧 Drink Water", "📖 Journaling"]
+# --- PROFESSIONAL MEDICAL SUGGESTIONS (Based on WHO/CBT Guidelines) ---
+def get_professional_suggestions(condition, severity, lang):
+    # Base logic: Mild (Self-care), Moderate (Management), Severe (Professional Help)
+    
+    suggestions_en = {
+        "Anxiety": {
+            "Mild": ["**Self-Care:** Practice 'Box Breathing' (4-4-4-4 technique) twice daily.", "**Lifestyle:** Reduce caffeine intake after 2 PM.", "**Mindfulness:** Spend 10 mins in nature."],
+            "Moderate": ["**Management:** Start a 'Worry Journal' - write down worries and close the book.", "**Physical:** Engage in 20 mins of aerobic exercise daily.", "**Sleep:** Maintain strict sleep hygiene (no screens 1 hour before bed)."],
+            "Severe/High": ["**Urgent Action:** Please consult a university counselor or psychologist.", "**Immediate Coping:** Use the 5-4-3-2-1 Grounding Technique immediately if feeling overwhelmed.", "**Support:** Reach out to a trusted friend or family member today."]
+        },
+        "Stress": {
+            "Mild": ["**Organization:** Use the Eisenhower Matrix to prioritize tasks.", "**Break:** Take a 5-minute break for every 25 minutes of study (Pomodoro).", "**Social:** Talk to a friend about non-academic topics."],
+            "Moderate": ["**Relaxation:** Practice Progressive Muscle Relaxation (PMR) before sleep.", "**Balance:** Ensure you are not skipping meals or sleep for study.", "**Activity:** Light yoga or stretching can reduce cortisol."],
+            "Severe/High": ["**Intervention:** Academic load may be unmanageable; speak to your advisor.", "**Health:** High stress affects immunity; prioritize rest immediately.", "**Professional:** Consider stress management counseling."]
+        },
+        "Depression": {
+            "Mild": ["**Routine:** Stick to a small, manageable daily routine (e.g., make your bed).", "**Sunlight:** Get 15-20 minutes of morning sunlight.", "**Connection:** Send a message to one friend today."],
+            "Moderate": ["**Activity:** Behavioral Activation - do one thing you used to enjoy, even if you don't feel like it.", "**Diet:** Focus on Omega-3 rich foods (fish, nuts).", "**Sleep:** Avoid daytime napping to improve night sleep."],
+            "Severe/High": ["**Critical:** Please contact a mental health professional or the helpline provided.", "**Safety:** If you have thoughts of self-harm, call the emergency number immediately.", "**Support:** Do not isolate yourself; be around people you trust."]
+        }
     }
-    tips_bn = {
-        "Anxiety": ["🌬️ গভীর শ্বাস নিন (৪-৭-৮ টেকনিক)", "🧘 গ্রাউন্ডিং এক্সারসাইজ করুন", "☕ ক্যাফেইন (চা/কফি) কমান"],
-        "Stress": ["📝 কাজের তালিকা (To-Do List) করুন", "🚶 ১০ মিনিট হাঁটুন", "💤 ৮ ঘণ্টা ঘুমান"],
-        "Depression": ["🤝 বন্ধুর সাথে কথা বলুন", "🌞 সকালের রোদে থাকুন", "📅 ছোট রুটিন মেনে চলুন"],
-        "Healthy": ["🎉 এভাবেই চালিয়ে যান!", "💧 পর্যাপ্ত পানি পান করুন", "📖 ডায়েরি লিখুন"]
+
+    suggestions_bn = {
+        "Anxiety": {
+            "Mild": ["**যত্ন:** দিনে দুবার 'বক্স ব্রিদিং' (৪-৪-৪-৪ টেকনিক) অনুশীলন করুন।", "**জীবনধারা:** দুপুর ২টার পর চা/কফি খাওয়া কমিয়ে দিন।", "**মনোযোগ:** প্রকৃতির মাঝে ১০ মিনিট সময় কাটান।"],
+            "Moderate": ["**ব্যবস্থাপনা:** 'দুশ্চিন্তার ডায়েরি' লিখুন - চিন্তাগুলো লিখে খাতা বন্ধ করে রাখুন।", "**ব্যায়াম:** প্রতিদিন ২০ মিনিট অ্যারোবিক ব্যায়াম করুন।", "**ঘুম:** ঘুমানোর ১ ঘণ্টা আগে মোবাইল ব্যবহার বন্ধ রাখুন।"],
+            "Severe/High": ["**জরুরি:** দয়া করে বিশ্ববিদ্যালয়ের কাউন্সিলর বা সাইকোলজিস্টের পরামর্শ নিন।", "**তাৎক্ষণিক:** খুব অস্থির লাগলে ৫-৪-৩-২-১ গ্রাউন্ডিং টেকনিক ব্যবহার করুন।", "**সমর্থন:** আজই কোনো বিশ্বস্ত বন্ধু বা পরিবারের সদস্যের সাথে কথা বলুন।"]
+        },
+        "Stress": {
+            "Mild": ["**অর্গানাইজেশন:** কাজের গুরুত্ব অনুযায়ী তালিকা (To-Do List) তৈরি করুন।", "**বিরতি:** প্রতি ২৫ মিনিট পড়ার পর ৫ মিনিট বিরতি নিন (পমোডোরো)।", "**সামাজিক:** বন্ধুর সাথে পড়াশোনার বাইরের বিষয় নিয়ে কথা বলুন।"],
+            "Moderate": ["**শিথিলকরণ:** ঘুমানোর আগে পেশী শিথিলকরণ (PMR) ব্যায়াম করুন।", "**ভারসাম্য:** পড়ার জন্য খাওয়া বা ঘুম বাদ দিবেন না।", "**ব্যায়াম:** হালকা যোগব্যায়াম বা স্ট্রেচিং স্ট্রেস কমাতে সাহায্য করে।"],
+            "Severe/High": ["**হস্তক্ষেপ:** পড়ার চাপ অসহনীয় হলে অ্যাডভাইজারের সাথে কথা বলুন।", "**স্বাস্থ্য:** অতিরিক্ত স্ট্রেস রোগ প্রতিরোধ ক্ষমতা কমায়; বিশ্রামে অগ্রাধিকার দিন।", "**পেশাদার:** স্ট্রেস ম্যানেজমেন্ট কাউন্সিলিংয়ের কথা বিবেচনা করুন।"]
+        },
+        "Depression": {
+            "Mild": ["**রুটিন:** প্রতিদিন ছোট ছোট কাজ করার অভ্যাস করুন (যেমন: বিছানা গোছানো)।", "**রোদ:** সকালে ১৫-২০ মিনিট গায়ে রোদ লাগান।", "**যোগাযোগ:** আজ অন্তত একজন বন্ধুকে মেসেজ বা কল করুন।"],
+            "Moderate": ["**সক্রিয়তা:** ভালো না লাগলেও পছন্দের কোনো একটি কাজ করার চেষ্টা করুন।", "**খাবার:** ওমেগা-৩ সমৃদ্ধ খাবার (মাছ, বাদাম) খাওয়ার চেষ্টা করুন।", "**ঘুম:** রাতে ভালো ঘুমের জন্য দিনের বেলা ঘুমানো এড়িয়ে চলুন।"],
+            "Severe/High": ["**গুরুত্বপূর্ণ:** দয়া করে মানসিক স্বাস্থ্য বিশেষজ্ঞ বা হেল্পলাইনে যোগাযোগ করুন।", "**নিরাপত্তা:** যদি নিজেকে আঘাত করার চিন্তা আসে, তবে অবিলম্বে জরুরি নম্বরে কল করুন।", "**সমর্থন:** একা থাকবেন না; বিশ্বাসভাজন কারো সাথে সময় কাটান।"]
+        }
     }
-    return tips_bn.get(condition, []) if lang == 'Bangla' else tips_en.get(condition, [])
+
+    dataset = suggestions_bn if lang == 'Bangla' else suggestions_en
+    
+    # Logic to pick severity level from suggestion dict
+    # We map label text to Mild/Moderate/Severe keys
+    level_key = "Mild"
+    if "Moderate" in severity: level_key = "Moderate"
+    elif "Severe" in severity or "High" in severity: level_key = "Severe/High"
+    elif "Minimal" in severity or "Low" in severity: level_key = "Mild" # Treat minimal as mild for positive suggestions
+
+    return dataset.get(condition, {}).get(level_key, dataset[condition]["Mild"])
 
 # --- LANGUAGE SELECTOR ---
 st.sidebar.markdown("### 🌐 Language / ভাষা")
@@ -204,40 +243,27 @@ def get_safe_index(options, default_idx=0):
     if st.session_state.reset: return 0
     return min(default_idx, len(options) - 1)
 
-# --- DYNAMIC MAPPING FOR MODEL ---
-# English: Direct | Bangla: Mapped to English
-
-# 1. Age
+# Dynamic Inputs
 age_display = ['18-22', '23-26', '27-30', 'Above 30']
 age_input = st.sidebar.selectbox(t['age'], age_display, index=get_safe_index(age_display, 0))
 
-# 2. Gender
 gender_idx = st.sidebar.selectbox(t['gender'], t['genders'], index=get_safe_index(t['genders'], 0))
 gender_model = 'Male' if gender_idx in ['Male', 'পুরুষ'] else 'Female'
 
-# 3. Uni
 uni_idx = st.sidebar.selectbox(t['uni'], t['unis'], index=get_safe_index(t['unis'], 1))
 uni_model = 'Public' if uni_idx in ['Public', 'পাবলিক'] else 'Private'
 
-# 4. Dept
 dept_idx = st.sidebar.selectbox(t['dept'], t['depts'], index=get_safe_index(t['depts'], 0))
-dept_map = {
-    "সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"
-}
-dept_model = dept_map.get(dept_idx, dept_idx) # Fallback to input if English
+dept_map = {"সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"}
+dept_model = dept_map.get(dept_idx, dept_idx)
 
-# 5. Year
 year_idx = st.sidebar.selectbox(t['year'], t['years'], index=get_safe_index(t['years'], 0))
-year_map = {
-    '১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second Year', '৩য় বর্ষ': 'Third Year', '৪র্থ বর্ষ': 'Fourth Year', 'মাস্টার্স': 'Master'
-}
+year_map = {'১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second Year', '৩য় বর্ষ': 'Third Year', '৪র্থ বর্ষ': 'Fourth Year', 'মাস্টার্স': 'Master'}
 year_model = year_map.get(year_idx, year_idx)
 
-# 6. CGPA
 cgpa_val = 0.00 if st.session_state.reset else 3.50
 cgpa_input = st.sidebar.number_input(t['cgpa'], min_value=0.00, max_value=4.00, value=cgpa_val, step=0.01, format="%.2f")
 
-# 7. Scholarship
 sch_idx = st.sidebar.selectbox(t['scholarship'], t['scholars'], index=get_safe_index(t['scholars'], 1))
 sch_model = 'Yes' if sch_idx in ['Yes', 'হ্যাঁ'] else 'No'
 
@@ -257,7 +283,6 @@ st.info(t['instructions'])
 st.caption(t['scale_caption'])
 
 slider_options = t['slider_opts'] 
-# Standardized Mapping: 0-3
 options_map = {
     "Not at all": 0, "একদম না": 0,
     "Sometimes": 1, "মাঝে মাঝে": 1,
@@ -292,10 +317,7 @@ if analyze_btn:
     age_numeric = extract_number(age_input)
     cgpa_numeric = float(cgpa_input)
     
-    # 1. Prepare Input Dictionary (Mapping to English for Model)
     input_dict = {}
-    
-    # Safety: Ensure we have exactly the columns expected by the model
     if len(feature_columns) == 33:
         input_dict[feature_columns[0]] = age_numeric
         input_dict[feature_columns[1]] = gender_model
@@ -307,7 +329,6 @@ if analyze_btn:
         for i in range(26):
             input_dict[feature_columns[7+i]] = final_answers[i]
             
-        # 2. DataFrame Creation & Reindexing (CRITICAL FIX: Guarantees Order)
         input_df = pd.DataFrame([input_dict])
         input_df = input_df.reindex(columns=feature_columns, fill_value=0)
         
@@ -315,8 +336,7 @@ if analyze_btn:
             with st.spinner(t['analyzing']):
                 probs = model.predict_proba(input_df)
             
-            # --- SAFETY CHECK (Q26 Self-Harm) ---
-            # Q26 is at index 25. If score >= 2 (Often/Very Often)
+            # --- Q26 SAFETY ALERT ---
             if final_answers[25] >= 2:
                 st.markdown(f"""
                 <div class="emergency-box">
@@ -348,7 +368,7 @@ if analyze_btn:
                 display_label = label
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
-                # Translate Labels for Display
+                # Translate Labels
                 if lang == 'Bangla':
                     if is_healthy: display_label = "ঝুঁকি নেই / সুস্থ"
                     elif "Severe" in label: display_label = "তীব্র ঝুঁকি (Severe)"
@@ -362,43 +382,41 @@ if analyze_btn:
                 report_text += f"{cond}: {label} (Confidence: {confidence:.1f}%)\n"
                 
                 with result_cols[i]:
-                    st.markdown(f"#### {cond}")
+                    # Determine card color based on severity
                     if is_healthy:
                         st.success(f"**{display_label}**")
                         st.progress(0)
-                        risk_scores.append((cond, 0))
                         healthy_count += 1
+                        risk_scores.append((cond, 0, label))
                     else:
                         st.error(f"**{display_label}**")
                         st.progress(int(confidence))
                         st.caption(f"{'Risk Probability' if lang=='English' else 'ঝুঁকির সম্ভাবনা'}: {confidence:.1f}%")
-                        risk_scores.append((cond, confidence))
+                        risk_scores.append((cond, confidence, label))
 
             st.markdown("---")
             
-            # --- VISUALIZATION ---
-            col_v1, col_v2 = st.columns([1, 1])
-            with col_v1:
-                st.subheader("📈 " + t['risk_viz'])
-                viz_scores = [score if score > 0 else 5 for _, score in risk_scores]
-                df_chart = pd.DataFrame({'Condition': conditions, 'Risk Level': viz_scores})
-                fig = px.line_polar(df_chart, r='Risk Level', theta='Condition', line_close=True, range_r=[0, 100])
-                fig.update_traces(fill='toself')
-                st.plotly_chart(fig, use_container_width=True)
+            # --- PROFESSIONAL RECOMMENDATIONS (No Chart) ---
+            st.subheader(t['suggestions'])
             
-            with col_v2:
-                st.subheader(t['suggestions'])
-                if healthy_count == 3:
-                    st.balloons()
-                    st.markdown(t['healthy_msg'])
-                    for tip in get_recommendations("Healthy", lang):
-                        st.info(tip)
-                else:
-                    dominant = max(risk_scores, key=lambda x: x[1])
-                    concern_text = "Primary Concern" if lang=='English' else "প্রধান সমস্যা"
-                    st.warning(f"🚨 **{concern_text}: {dominant[0]}**")
-                    for tip in get_recommendations(dominant[0], lang):
-                        st.info(tip)
+            if healthy_count == 3:
+                st.balloons()
+                st.markdown(t['healthy_msg'])
+                report_text += "\nRecommendation: Maintain current healthy lifestyle."
+            else:
+                # Sort by risk confidence to show highest priority first
+                risk_scores.sort(key=lambda x: x[1], reverse=True)
+                
+                for cond, conf, severity_label in risk_scores:
+                    if conf > 0: # Only show for unhealthy conditions
+                        # Dynamic box color based on severity
+                        box_class = "suggestion-warning" if "Severe" in severity_label else "suggestion-box"
+                        
+                        st.markdown(f"##### 👉 **{cond} ({severity_label})**")
+                        suggestions = get_professional_suggestions(cond, severity_label, lang)
+                        for tip in suggestions:
+                            st.info(tip)
+                        report_text += f"\n[{cond} Suggestions]:\n" + "\n".join([s.replace('**', '') for s in suggestions]) + "\n"
 
             # Download Report
             st.markdown("---")
