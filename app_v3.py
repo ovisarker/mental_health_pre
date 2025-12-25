@@ -19,9 +19,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS
+# --- CUSTOM CSS (VISUAL FIXES) ---
 st.markdown("""
 <style>
+    /* 1. Main UI Elements */
     .footer {text-align:center; padding:20px; font-size:12px; color:#666; border-top:1px solid #ddd; margin-top: 50px;}
     
     .emergency-box {
@@ -60,6 +61,66 @@ st.markdown("""
     }
     
     li { color: #000000 !important; }
+
+    /* ==========================================
+       Streamlit Selectbox: Always readable
+       White background + black text (sidebar + main)
+       ========================================== */
+
+    /* Closed selectbox (the visible field) */
+    div[data-baseweb="select"] > div {
+      background-color: #ffffff !important;
+      border: 1px solid #cccccc !important;
+    }
+
+    /* Text inside closed selectbox (selected value / placeholder) */
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input,
+    div[data-baseweb="select"] div {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+
+    /* Dropdown popup container (portal/popover) */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    /* Menu containers (BaseWeb sometimes uses menu instead of listbox) */
+    div[data-baseweb="menu"] {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    /* Listbox container */
+    ul[role="listbox"], div[role="listbox"] {
+      background-color: #ffffff !important;
+      border: 1px solid #cccccc !important;
+    }
+
+    /* Options can be DIV or LI depending on Streamlit/BaseWeb version */
+    div[role="option"], li[role="option"] {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    /* Hover/active option */
+    div[role="option"]:hover, li[role="option"]:hover,
+    div[role="option"][aria-selected="true"], li[role="option"][aria-selected="true"] {
+      background-color: #e9ecef !important;
+      color: #000000 !important;
+    }
+
+    /* Absolute fallback: force all text inside dropdown menus to be black */
+    div[data-baseweb="popover"] * ,
+    ul[role="listbox"] * ,
+    div[role="listbox"] * ,
+    div[data-baseweb="menu"] * {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -141,8 +202,7 @@ translations = {
     }
 }
 
-# --- INTERNAL OPTIONS & MAPPINGS (The Fix) ---
-# Internal values are English (Canonical). Mappings are for Display.
+# --- INTERNAL OPTIONS & MAPPINGS (Crash Proof) ---
 opt_gender = ["Select", "Male", "Female"]
 opt_uni = ["Select", "Public", "Private"]
 opt_dept = ["Select", "CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"]
@@ -150,7 +210,6 @@ opt_year = ["Select", "First Year", "Second Year", "Third Year", "Fourth Year", 
 opt_sch = ["Select", "Yes", "No"]
 opt_age = ["Select", "18-22", "23-26", "27-30", "Above 30"]
 
-# Display Mappings
 bn_map = {
     "Select": "সিলেক্ট করুন...",
     "Male": "পুরুষ", "Female": "মহিলা",
@@ -161,7 +220,6 @@ bn_map = {
 }
 
 def format_option(option):
-    # Returns Bangla label if language is Bangla, else returns the option itself
     if st.session_state.get('lang', 'English') == 'Bangla':
         return bn_map.get(option, option)
     return "Select..." if option == "Select" else option
@@ -302,7 +360,6 @@ st.sidebar.header(t["sidebar_title"])
 locked = st.session_state.profile_locked
 
 with st.sidebar.form("profile_form"):
-    # Using format_func for Bilingual Options (Crash-Proof)
     student_name = st.text_input(t["name"], placeholder="Enter full name", key="p_name", disabled=locked)
     age_input = st.selectbox(t["age"], opt_age, index=0, key="p_age", disabled=locked, format_func=format_option)
     gender_input = st.selectbox(t["gender"], opt_gender, index=0, key="p_gender", disabled=locked, format_func=format_option)
@@ -315,7 +372,6 @@ with st.sidebar.form("profile_form"):
     confirm_ok = st.checkbox(t["confirm"], key="p_conf", disabled=locked)
     lock_btn = st.form_submit_button(t["unlock"], type="primary", disabled=locked)
 
-# Edit Button Logic
 if locked:
     if st.sidebar.button(t["edit_profile"]):
         st.session_state.profile_locked = False
@@ -324,7 +380,6 @@ if locked:
 # Validation logic
 name_clean = student_name.strip()
 valid_name = len(name_clean) >= 3 and any(c.isalpha() for c in name_clean)
-# Check against "Select" (internal value)
 is_valid = lambda x: x != "Select"
 
 if lock_btn:
@@ -334,7 +389,6 @@ if lock_btn:
           is_valid(uni_input) and is_valid(dept_input) and is_valid(year_input) and 
           is_valid(sch_input) and cgpa_input > 0 and confirm_ok):
         
-        # Save validated data to session state
         st.session_state.profile_data = {
             "name": name_clean,
             "age": age_input,
@@ -358,8 +412,6 @@ with st.sidebar.expander(t["helpline_title"], expanded=True):
 🚑 **National Emergency:** 999
 """)
 
-
-
 # Gatekeeper
 if not st.session_state.profile_locked:
     st.warning(t["fill_profile_msg"])
@@ -367,7 +419,6 @@ if not st.session_state.profile_locked:
     st.stop()
 
 # --- QUESTIONNAIRE ---
-# Use Saved Data for Display (Greeting)
 p_data = st.session_state.profile_data
 
 st.subheader(("👋 Hello, " if lang == "English" else "👋 হ্যালো, ") + p_data["name"])
@@ -384,11 +435,9 @@ opts_map = {
 q_list = q_labels_bn if lang == "Bangla" else q_labels_en
 answers = []
 
-# --- DIRECT RENDERING ---
 cL, cR = st.columns(2)
 for i, q in enumerate(q_list):
     with (cL if i % 2 == 0 else cR):
-        # Stable key: survives language switch
         val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
         answers.append(opts_map[val])
         st.divider()
@@ -397,15 +446,14 @@ analyze = st.button(t["analyze_btn"], type="primary", use_container_width=True)
 
 # --- RESULTS ---
 if analyze:
-    # Use p_data (Internal English Values) directly for prediction
     input_dict = {
         feature_columns[0]: extract_number(p_data["age"]),
-        feature_columns[1]: p_data["gender"], # Already "Male"/"Female"
-        feature_columns[2]: p_data["uni"],    # Already "Public"/"Private"
-        feature_columns[3]: p_data["dept"],   # Already "CSE", etc.
-        feature_columns[4]: p_data["year"],   # Already "First Year", etc.
+        feature_columns[1]: p_data["gender"],
+        feature_columns[2]: p_data["uni"],
+        feature_columns[3]: p_data["dept"],
+        feature_columns[4]: p_data["year"],
         feature_columns[5]: float(p_data["cgpa"]),
-        feature_columns[6]: p_data["sch"]     # Already "Yes"/"No"
+        feature_columns[6]: p_data["sch"]
     }
     for i in range(26):
         input_dict[feature_columns[7+i]] = answers[i]
@@ -489,7 +537,7 @@ if analyze:
             style = "suggestion-severe" if is_severe else "suggestion-box"
             
             st.markdown(f"**{c} ({lbl})**")
-            st.markdown(f"<div class='{style}' style='color:black;'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='{style}'><ul style='margin:0;padding-left:20px'>{''.join([f'<li>{tip}</li>' for tip in tips])}</ul></div>", unsafe_allow_html=True)
             
             r_txt.append(f"\n[{c} Suggestions]")
             r_txt.extend([f"- {tip}" for tip in tips])
