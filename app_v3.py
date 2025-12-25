@@ -5,6 +5,7 @@ import joblib
 import re
 import warnings
 from datetime import datetime
+import plotly.express as px
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -17,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS for polished UI
 st.markdown("""
 <style>
     div[data-testid="metric-container"] {
@@ -27,13 +28,16 @@ st.markdown("""
     .footer {
         text-align: center; padding: 20px; font-size: 12px; color: #666; border-top: 1px solid #eee;
     }
+    .emergency-box {
+        background-color: #ffebee; border: 2px solid #ef5350; padding: 15px; border-radius: 8px; color: #c62828; margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # --- TRANSLATION DICTIONARY ---
 translations = {
     'English': {
-        'title': "Student Mental Health Assessment & Prediction",
+        'title': "Student Mental Health Assessment & Risk Prediction",
         'subtitle': "A Machine Learning Based Screening System",
         'reset_btn': "🔄 Reset Form",
         'sidebar_title': "📝 Student Profile",
@@ -48,15 +52,16 @@ translations = {
         'section_title': "📋 Behavioral Self-Assessment",
         'instructions': "💡 **Instructions:** Please slide the scale to indicate how frequently you have felt these emotions **over the last 2 weeks**.",
         'scale_caption': "Scale: **Not at all** (0) → **Sometimes** (1) → **Often** (2) → **Very Often** (3)",
-        'analyze_btn': "🚀 Analyze Prediction",
+        'analyze_btn': "🚀 Analyze Risk Level",
         'analyzing': "Machine Learning Model is analyzing...",
         'success': "✅ Assessment Complete",
         'result_title': "📊 Assessment Result",
         'suggestions': "💡 Suggestions",
         'healthy_msg': "🎉 **Status: Healthy**\nYour input pattern suggests a balanced mental state.",
         'download_btn': "📥 Download Assessment Report",
-        'disclaimer_short': "⚠️ **Disclaimer:** This is a Machine Learning based research project. Results are probabilistic and do not replace professional medical advice.",
+        'disclaimer_short': "⚠️ **Disclaimer:** This is a Machine Learning based screening tool. Results are probabilistic and do not replace professional medical advice.",
         'dev_by': "Developed by",
+        'risk_viz': "Risk Visualization",
         'slider_opts': ["Not at all", "Sometimes", "Often", "Very Often"],
         'genders': ['Male', 'Female'],
         'unis': ['Public', 'Private'],
@@ -65,7 +70,7 @@ translations = {
         'depts': ["CSE", "EEE", "BBA", "English", "Law", "Pharmacy", "Other"]
     },
     'Bangla': {
-        'title': "শিক্ষার্থী মানসিক স্বাস্থ্য মূল্যায়ন ব্যবস্থা",
+        'title': "শিক্ষার্থী মানসিক স্বাস্থ্য ও ঝুঁকি মূল্যায়ন",
         'subtitle': "মেশিন লার্নিং ভিত্তিক স্ক্রিনিং সিস্টেম",
         'reset_btn': "🔄 ফর্ম রিসেট করুন",
         'sidebar_title': "📝 শিক্ষার্থীর প্রোফাইল",
@@ -80,7 +85,7 @@ translations = {
         'section_title': "📋 আচরণগত আত্ম-মূল্যায়ন",
         'instructions': "💡 **নির্দেশনা:** গত **২ সপ্তাহে** আপনি এই অনুভূতিগুলো কতবার অনুভব করেছেন তা স্লাইড করে জানান।",
         'scale_caption': "স্কেল: **একদম না** (০) → **মাঝে মাঝে** (১) → **প্রায়ই** (২) → **খুব বেশি** (৩)",
-        'analyze_btn': "🚀 ফলাফল বিশ্লেষণ করুন",
+        'analyze_btn': "🚀 ঝুঁকি বিশ্লেষণ করুন",
         'analyzing': "মেশিন লার্নিং মডেল বিশ্লেষণ করছে...",
         'success': "✅ মূল্যায়ন সম্পন্ন হয়েছে",
         'result_title': "📊 ফলাফল",
@@ -89,6 +94,7 @@ translations = {
         'download_btn': "📥 রিপোর্ট ডাউনলোড করুন",
         'disclaimer_short': "⚠️ **সতর্কতা:** এটি একটি মেশিন লার্নিং গবেষণা প্রকল্প। এই ফলাফল পেশাদার ডাক্তারি পরামর্শের বিকল্প নয়।",
         'dev_by': "ডেভেলপ করেছে",
+        'risk_viz': "ঝুঁকির গ্রাফ",
         'slider_opts': ["একদম না", "মাঝে মাঝে", "প্রায়ই", "খুব বেশি"],
         'genders': ['পুরুষ', 'মহিলা'],
         'unis': ['পাবলিক', 'প্রাইভেট'],
@@ -198,13 +204,11 @@ def get_safe_index(options, default_idx=0):
     if st.session_state.reset: return 0
     return min(default_idx, len(options) - 1)
 
-# Dynamic Inputs based on Language
-# Mapping Logic: We must map Bangla inputs back to English values for Model
-# But for Dropdowns (Gender, Uni, etc.), LabelEncoder usually handled English strings during training.
-# SAFE APPROACH: Show Bangla to user, but internally map to English for the model.
+# --- DYNAMIC MAPPING FOR MODEL ---
+# English: Direct | Bangla: Mapped to English
 
 # 1. Age
-age_display = ['18-22', '23-26', '27-30', 'Above 30'] # Numbers stay same usually
+age_display = ['18-22', '23-26', '27-30', 'Above 30']
 age_input = st.sidebar.selectbox(t['age'], age_display, index=get_safe_index(age_display, 0))
 
 # 2. Gender
@@ -217,16 +221,13 @@ uni_model = 'Public' if uni_idx in ['Public', 'পাবলিক'] else 'Privat
 
 # 4. Dept
 dept_idx = st.sidebar.selectbox(t['dept'], t['depts'], index=get_safe_index(t['depts'], 0))
-# Simple mapping for Dept if needed, or pass as is if model handles text
-# Assuming model trained on English Dept names. 
 dept_map = {
     "সিএসই": "CSE", "ইইই": "EEE", "বিবিএ": "BBA", "ইংরেজি": "English", "আইন": "Law", "ফার্মাসি": "Pharmacy", "অন্যান্য": "Other"
 }
-dept_model = dept_map.get(dept_idx, dept_idx) # Fallback to input if english
+dept_model = dept_map.get(dept_idx, dept_idx) # Fallback to input if English
 
 # 5. Year
 year_idx = st.sidebar.selectbox(t['year'], t['years'], index=get_safe_index(t['years'], 0))
-# Map Year
 year_map = {
     '১ম বর্ষ': 'First Year', '২য় বর্ষ': 'Second Year', '৩য় বর্ষ': 'Third Year', '৪র্থ বর্ষ': 'Fourth Year', 'মাস্টার্স': 'Master'
 }
@@ -255,8 +256,8 @@ st.subheader(t['section_title'])
 st.info(t['instructions'])
 st.caption(t['scale_caption'])
 
-slider_options = t['slider_opts'] # [Not at all, ..., Very Often] OR [একদম না, ...]
-# Map BOTH English and Bangla options to 0-3 integers
+slider_options = t['slider_opts'] 
+# Standardized Mapping: 0-3
 options_map = {
     "Not at all": 0, "একদম না": 0,
     "Sometimes": 1, "মাঝে মাঝে": 1,
@@ -271,7 +272,7 @@ q_col1, q_col2 = st.columns(2)
 for i, q_text in enumerate(q_labels):
     current_col = q_col1 if i % 2 == 0 else q_col2
     with current_col:
-        key_name = f"q_{i}_{st.session_state.reset}_{lang}" # Unique key per language
+        key_name = f"q_{i}_{st.session_state.reset}_{lang}"
         val = st.select_slider(label=f"**{q_text}**", options=slider_options, value=slider_options[0], key=key_name)
         answers_map[i] = options_map[val]
         st.write("") 
@@ -291,8 +292,10 @@ if analyze_btn:
     age_numeric = extract_number(age_input)
     cgpa_numeric = float(cgpa_input)
     
-    # BUILD INPUT DICT (Using English Mapped Values for Model)
+    # 1. Prepare Input Dictionary (Mapping to English for Model)
     input_dict = {}
+    
+    # Safety: Ensure we have exactly the columns expected by the model
     if len(feature_columns) == 33:
         input_dict[feature_columns[0]] = age_numeric
         input_dict[feature_columns[1]] = gender_model
@@ -304,11 +307,23 @@ if analyze_btn:
         for i in range(26):
             input_dict[feature_columns[7+i]] = final_answers[i]
             
+        # 2. DataFrame Creation & Reindexing (CRITICAL FIX: Guarantees Order)
         input_df = pd.DataFrame([input_dict])
+        input_df = input_df.reindex(columns=feature_columns, fill_value=0)
         
         try:
             with st.spinner(t['analyzing']):
                 probs = model.predict_proba(input_df)
+            
+            # --- SAFETY CHECK (Q26 Self-Harm) ---
+            # Q26 is at index 25. If score >= 2 (Often/Very Often)
+            if final_answers[25] >= 2:
+                st.markdown(f"""
+                <div class="emergency-box">
+                    <h3>🚨 {'Emergency Alert' if lang=='English' else 'জরুরি সতর্কতা'}</h3>
+                    <p>{'Your response indicates distress. Please seek professional help or call the helpline immediately.' if lang=='English' else 'আপনার উত্তর মানসিক যন্ত্রণার ইঙ্গিত দিচ্ছে। দয়া করে অবিলম্বে পেশাদার সাহায্য নিন অথবা হেল্পলাইনে কল করুন।'}</p>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.success(t['success'])
             st.subheader(t['result_title'])
@@ -329,11 +344,11 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
-                # Display Label Logic
+                # Display Logic
                 display_label = label
                 is_healthy = any(safe in label for safe in ["Minimal", "Low", "None", "No Depression"])
                 
-                # Translate Labels for Display Only
+                # Translate Labels for Display
                 if lang == 'Bangla':
                     if is_healthy: display_label = "ঝুঁকি নেই / সুস্থ"
                     elif "Severe" in label: display_label = "তীব্র ঝুঁকি (Severe)"
@@ -364,7 +379,7 @@ if analyze_btn:
             # --- VISUALIZATION ---
             col_v1, col_v2 = st.columns([1, 1])
             with col_v1:
-                st.subheader("📈 " + ("Risk Visualization" if lang=='English' else "ঝুঁকির গ্রাফ"))
+                st.subheader("📈 " + t['risk_viz'])
                 viz_scores = [score if score > 0 else 5 for _, score in risk_scores]
                 df_chart = pd.DataFrame({'Condition': conditions, 'Risk Level': viz_scores})
                 fig = px.line_polar(df_chart, r='Risk Level', theta='Condition', line_close=True, range_r=[0, 100])
