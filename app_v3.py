@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import joblib
 import re
-import plotly.express as px
 import warnings
 from datetime import datetime
 
@@ -17,6 +16,58 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Custom CSS for Modern Footer & Cards
+st.markdown("""
+<style>
+    /* Metric Cards Styling */
+    div[data-testid="metric-container"] {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    /* Footer Styling */
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #f1f3f6;
+        color: #333;
+        text-align: center;
+        padding: 10px;
+        border-top: 1px solid #e0e0e0;
+        z-index: 100;
+    }
+    .footer-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        font-family: sans-serif;
+    }
+    .dev-section {
+        text-align: center;
+        line-height: 1.4;
+        font-size: 14px;
+        color: #555;
+    }
+    .dev-title {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 12px;
+    }
+    .dev-name {
+        font-weight: 600;
+        color: #000;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # --- RESET LOGIC ---
 if 'reset' not in st.session_state:
@@ -109,7 +160,7 @@ scholarship = st.sidebar.selectbox("7. Scholarship/Waiver?", ['Yes', 'No'], inde
 
 st.sidebar.markdown("---")
 
-# --- NEW LOCATION: HELPLINE (Bottom of Sidebar) ---
+# --- HELPLINE (Sidebar Bottom) ---
 with st.sidebar.expander("🆘 Emergency Helpline (BD)", expanded=True):
     st.markdown("""
     📞 **Kaan Pete Roi:** 01779554391  
@@ -120,8 +171,6 @@ with st.sidebar.expander("🆘 Emergency Helpline (BD)", expanded=True):
 # --- 5. QUESTIONNAIRE (SINGLE SECTION) ---
 st.subheader("📋 Behavioral Self-Assessment")
 st.info("💡 **Instructions:** Please slide the scale to indicate how frequently you have felt these emotions **over the last semester**.")
-
-# Slider Scale Legend
 st.caption("Scale: **Not at all** (0) → **Sometimes** (1) → **Often** (2) → **Very Often** (3)")
 
 slider_options = ["Not at all", "Sometimes", "Often", "Very Often"]
@@ -145,27 +194,16 @@ q_labels = [
 ]
 
 answers_map = {}
-
-# Layout: 2 Columns for better structure
 q_col1, q_col2 = st.columns(2)
 
 for i, q_text in enumerate(q_labels):
-    # Determine which column to place the question
     current_col = q_col1 if i % 2 == 0 else q_col2
-    
     with current_col:
         key_name = f"q_{i}_{st.session_state.reset}"
-        # Clean select slider without custom CSS to ensure Dark/Light mode compatibility
-        val = st.select_slider(
-            label=f"**{q_text}**", 
-            options=slider_options, 
-            value=slider_options[0], 
-            key=key_name
-        )
+        val = st.select_slider(label=f"**{q_text}**", options=slider_options, value=slider_options[0], key=key_name)
         answers_map[i] = options_map[val]
-        st.write("") # Spacer
+        st.write("") 
 
-# Reconstruct ordered answers
 final_answers = [answers_map[i] for i in range(26)]
 
 if st.session_state.reset:
@@ -196,11 +234,11 @@ if analyze_btn:
         input_df = pd.DataFrame([input_dict])
         
         try:
-            with st.spinner("Machine Learning Model is analyzing..."):
+            with st.spinner("Analyzing pattern..."):
                 probs = model.predict_proba(input_df)
             
-            st.success("✅ Prediction Complete")
-            st.subheader("📊 Assessment Result")
+            st.success("✅ Assessment Complete")
+            st.subheader("📊 Prediction Results")
             
             result_cols = st.columns(3)
             conditions = ['Anxiety', 'Stress', 'Depression']
@@ -218,7 +256,6 @@ if analyze_btn:
                 label = encoders[f'{cond} Label'].inverse_transform([best_idx])[0]
                 confidence = prob_arr[best_idx] * 100
                 
-                # Smart Label Mapping
                 display_label = label
                 if label == "Minimal Anxiety": display_label = "No Anxiety / Healthy"
                 if label == "Low Stress": display_label = "No Stress / Healthy"
@@ -243,28 +280,19 @@ if analyze_btn:
 
             st.markdown("---")
             
-            # --- VISUALIZATION & RECOMMENDATIONS ---
-            col_v1, col_v2 = st.columns([1, 1])
-            
-            with col_v1:
-                st.subheader("📈 Risk Visualization")
-                viz_scores = [score if score > 0 else 5 for _, score in risk_scores]
-                df_chart = pd.DataFrame({'Condition': conditions, 'Risk Level': viz_scores})
-                fig = px.line_polar(df_chart, r='Risk Level', theta='Condition', line_close=True, range_r=[0, 100], template="plotly_white")
-                fig.update_traces(fill='toself', line_color='#FF4B4B')
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col_v2:
-                st.subheader("💡 Suggestions")
-                if healthy_count == 3:
-                    st.balloons()
-                    st.success("🎉 **Status: Healthy**")
-                    st.markdown("Your input pattern suggests a balanced mental state.")
-                else:
-                    dominant = max(risk_scores, key=lambda x: x[1])
-                    st.warning(f"🚨 **Primary Concern: {dominant[0]}**")
-                    for tip in get_recommendations(dominant[0]):
-                        st.info(tip)
+            # --- RECOMMENDATIONS (No Chart) ---
+            st.subheader("💡 Suggestions")
+            if healthy_count == 3:
+                st.balloons()
+                st.success("🎉 **Status: Healthy**")
+                st.markdown("Your input pattern suggests a balanced mental state.")
+                for tip in get_recommendations("Healthy"):
+                    st.info(tip)
+            else:
+                dominant = max(risk_scores, key=lambda x: x[1])
+                st.warning(f"🚨 **Primary Concern: {dominant[0]}**")
+                for tip in get_recommendations(dominant[0]):
+                    st.info(tip)
 
             # Download Report
             st.markdown("---")
@@ -283,21 +311,27 @@ if analyze_btn:
     else:
         st.error("Feature column count mismatch!")
 
-# --- 7. FOOTER (BRANDING & DISCLAIMER) ---
-st.markdown("<br><br><br>", unsafe_allow_html=True)
+# --- 7. MODERN FOOTER ---
+st.markdown("<br><br>", unsafe_allow_html=True)
 st.divider()
 
-col_footer1, col_footer2 = st.columns([1, 1])
-
-with col_footer1:
-    st.markdown("""
-    **Developed by:** 👨‍💻 **Team Dual Core** Department of CSE, Daffodil International University
-    """)
-
-with col_footer2:
-    st.markdown("""
-    <div style="font-size: 12px; color: gray; text-align: right;">
-    ⚠️ <strong>Disclaimer:</strong> This is an academic research project. 
-    The predictions are based on Machine Learning algorithms and do not replace professional medical advice.
+st.markdown("""
+<div style="text-align: center; font-family: sans-serif; color: #555;">
+    <p style="font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
+        Developed by
+    </p>
+    <h3 style="margin: 0; color: #2c3e50;">Team Dual Core</h3>
+    <p style="margin: 5px 0 0 0; font-size: 14px;">Ovi Sarker</p>
+    <p style="margin: 2px 0 0 0; font-size: 14px;">BM Sabbir Hossen Riad</p>
+    <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+        Department of CSE • Daffodil International University
+    </p>
+    <br>
+    <div style="background-color: #fff3cd; padding: 10px; border-radius: 5px; display: inline-block; border: 1px solid #ffeeba;">
+        <span style="font-size: 11px; color: #856404;">
+            ⚠️ <strong>Disclaimer:</strong> This is a Machine Learning based research project. 
+            Results are probabilistic and do not replace professional medical advice.
+        </span>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
