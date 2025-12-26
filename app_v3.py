@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CUSTOM CSS (SAFE & SCOPED) ---
+# --- CUSTOM CSS (SAFE & SCOPED for Dark/Light Mode) ---
 st.markdown("""
 <style>
     /* 1. General UI Elements */
@@ -69,7 +69,8 @@ st.markdown("""
 
     /* ============================
        3. SELECTBOX FIX (SAFE NUCLEAR)
-       Scoped to BaseWeb components only
+       Scoped to BaseWeb components only. 
+       Ensures "Select..." and options are Black on White in all themes.
        ============================ */
 
     /* White background for closed selectbox */
@@ -381,6 +382,7 @@ if locked:
 # Validation logic
 name_clean = student_name.strip()
 valid_name = len(name_clean) >= 3 and any(c.isalpha() for c in name_clean)
+# Check against "Select" (internal value)
 is_valid = lambda x: x != "Select"
 
 if lock_btn:
@@ -414,8 +416,6 @@ with st.sidebar.expander(t["helpline_title"], expanded=True):
 🚑 **National Emergency:** 999
 """)
 
-
-
 # Gatekeeper
 if not st.session_state.profile_locked:
     st.warning(t["fill_profile_msg"])
@@ -438,15 +438,24 @@ opts_map = {
     "Very Often": 3, "খুব বেশি": 3
 }
 q_list = q_labels_bn if lang == "Bangla" else q_labels_en
-answers = []
 
-# --- DIRECT RENDERING ---
+# --- FIXED LAYOUT: SPLIT BY HALVES (Mobile Friendly) ---
+answers = [0] * len(q_list)
+mid = (len(q_list) + 1) // 2  # Split point (13)
+
 cL, cR = st.columns(2)
-for i, q in enumerate(q_list):
-    with (cL if i % 2 == 0 else cR):
-        # Stable key: survives language switch
+
+with cL:
+    for i, q in enumerate(q_list[:mid]):
         val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{i}")
-        answers.append(opts_map[val])
+        answers[i] = opts_map[val]
+        st.divider()
+
+with cR:
+    for i, q in enumerate(q_list[mid:]):
+        real_idx = mid + i
+        val = st.radio(f"**{q}**", radio_opts, horizontal=True, key=f"q_{real_idx}")
+        answers[real_idx] = opts_map[val]
         st.divider()
 
 analyze = st.button(t["analyze_btn"], type="primary", use_container_width=True)
@@ -532,6 +541,7 @@ if analyze:
         st.success(t['healthy_msg'])
         r_txt.append("\nOverall: Healthy/Balanced state.")
     else:
+        # Show Overall Issue prominently
         top_issue = concerns[0] 
         overall_text = f"**{t['overall_label']} {top_issue[0]} ({top_issue[2]})**"
         st.info(overall_text, icon="📌")
